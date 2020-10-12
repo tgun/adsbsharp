@@ -5,10 +5,8 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Text;
 
-namespace ADSBSharp
-{
-    public class SimpleTcpServer : IFrameSink,IDisposable
-    {
+namespace ADSBSharp {
+    public class SimpleTcpServer : IFrameSink, IDisposable {
         private const int DefaultPortNumber = 47806;
 
         private TcpListener _listener;
@@ -22,64 +20,52 @@ namespace ADSBSharp
         private readonly List<TcpClient> _tcpClients = new List<TcpClient>();
         private readonly List<TcpClient> _deadTcpClients = new List<TcpClient>();
 
-        ~SimpleTcpServer()
-        {
+        ~SimpleTcpServer() {
             Dispose();
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
             Stop();
             GC.SuppressFinalize(this);
         }
-        
+
         #region Public Methods
 
-        public void FrameReady(byte[] frame, int actualLength)
-        {
-            lock (_frameQueue)
-            {
-                if (_frameQueue.Count > 1000)
-                {
+        public void FrameReady(byte[] frame, int actualLength) {
+            lock (_frameQueue) {
+                if (_frameQueue.Count > 1000) {
                     return;
                 }
             }
 
             var sb = new StringBuilder();
             sb.Append("*");
-            for (var i = 0; i < actualLength; i++)
-            {
+            for (var i = 0; i < actualLength; i++) {
                 sb.Append(string.Format("{0:X2}", frame[i]));
             }
             sb.Append(";\r\n");
 
-            lock (_frameQueue)
-            {
+            lock (_frameQueue) {
                 _frameQueue.Enqueue(sb.ToString());
             }
             _frameEvent.Set();
         }
 
-        public void Start(string hostName, int port)
-        {
-            if (_listenerThread == null)
-            {
+        public void Start(string hostName, int port) {
+            if (_listenerThread == null) {
                 _port = port;
 
 
                 #region Listen / Async Accept
 
-                try
-                {
+                try {
                     _listener = new TcpListener(IPAddress.Any, _port);
                     _listener.Start();
                     _listener.BeginAcceptTcpClient(TcpClientConnectCallback, _listener);
                     Console.WriteLine("Listening on {0}", _listener.LocalEndpoint);
                 }
-                catch
-                {
-                    if (_listener != null)
-                    {
+                catch {
+                    if (_listener != null) {
                         _listener.Stop();
                         _listener = null;
                     }
@@ -96,11 +82,9 @@ namespace ADSBSharp
             }
         }
 
-        public void Stop()
-        {
+        public void Stop() {
             _listenerThreadRunning = false;
-            if (_listenerThread != null)
-            {
+            if (_listenerThread != null) {
                 _frameEvent.Set();
                 _clientConnectedEvent.Set();
                 _listenerThread.Join();
@@ -112,90 +96,70 @@ namespace ADSBSharp
 
         #region Private Methods
 
-        private void ListenerThread()
-        {
+        private void ListenerThread() {
             var encoder = new ASCIIEncoding();
 
-            while (_listenerThreadRunning)
-            {
-                if (_tcpClients.Count == 0)
-                {
+            while (_listenerThreadRunning) {
+                if (_tcpClients.Count == 0) {
                     _clientConnectedEvent.WaitOne();
                 }
                 _frameEvent.WaitOne();
 
                 string frameString;
-                lock (_frameQueue)
-                {
-                    if (_frameQueue.Count == 0)
-                    {
+                lock (_frameQueue) {
+                    if (_frameQueue.Count == 0) {
                         continue;
                     }
                     frameString = _frameQueue.Dequeue();
                 }
 
                 var bytes = encoder.GetBytes(frameString);
-                lock (_tcpClients)
-                {
-                    foreach (TcpClient client in _tcpClients)
-                    {
-                        try
-                        {
-                            if (client.Connected)
-                            {
+                lock (_tcpClients) {
+                    foreach (TcpClient client in _tcpClients) {
+                        try {
+                            if (client.Connected) {
                                 var stream = client.GetStream();
                                 stream.Write(bytes, 0, bytes.Length);
                                 stream.Flush();
                             }
-                            else
-                            {
+                            else {
                                 _deadTcpClients.Add(client);
                             }
                         }
-                        catch
-                        {
+                        catch {
                             _deadTcpClients.Add(client);
                         }
                     }
                 }
-                if (_deadTcpClients.Count > 0)
-                {
+                if (_deadTcpClients.Count > 0) {
                     CloseDead();
                 }
             }
 
             CloseAll();
 
-            try
-            {
+            try {
                 _listener.Stop();
             }
-            catch
-            {
+            catch {
             }
 
             _listenerThreadRunning = false;
             Console.WriteLine("TCP Server loop exited...");
         }
 
-        private void CloseDead()
-        {
-            lock (_tcpClients)
-            {
-                foreach (TcpClient client in _deadTcpClients)
-                {
-                    try
-                    {
+        private void CloseDead() {
+            lock (_tcpClients) {
+                foreach (TcpClient client in _deadTcpClients) {
+                    try {
                         Console.WriteLine("Removing client from {0}", client.Client.RemoteEndPoint);
-                        if (client.Connected)
-                        {
+                        if (client.Connected) {
                             var stream = client.GetStream();
                             stream.Close();
                         }
                         client.Close();
                     }
-                    catch
-                    {
+                    catch {
                     }
                     _tcpClients.Remove(client);
                 }
@@ -203,23 +167,17 @@ namespace ADSBSharp
             _deadTcpClients.Clear();
         }
 
-        private void CloseAll()
-        {
-            lock (_tcpClients)
-            {
-                foreach (TcpClient client in _tcpClients)
-                {
-                    try
-                    {
-                        if (client.Connected)
-                        {
+        private void CloseAll() {
+            lock (_tcpClients) {
+                foreach (TcpClient client in _tcpClients) {
+                    try {
+                        if (client.Connected) {
                             var stream = client.GetStream();
                             stream.Close();
                         }
                         client.Close();
                     }
-                    catch
-                    {
+                    catch {
                     }
                 }
                 _tcpClients.Clear();
@@ -230,26 +188,21 @@ namespace ADSBSharp
 
         #region Async Callback
 
-        private void TcpClientConnectCallback(IAsyncResult result)
-        {
-            if (_listenerThreadRunning)
-            {
+        private void TcpClientConnectCallback(IAsyncResult result) {
+            if (_listenerThreadRunning) {
                 var listener = (TcpListener)result.AsyncState;
                 var client = listener.EndAcceptTcpClient(result);
-                lock (_tcpClients)
-                {
+                lock (_tcpClients) {
                     _tcpClients.Add(client);
                 }
                 _clientConnectedEvent.Set();
 
                 Console.WriteLine("New client from {0}. {1} clients now connected.", client.Client.RemoteEndPoint, _tcpClients.Count);
 
-                try
-                {
+                try {
                     _listener.BeginAcceptTcpClient(TcpClientConnectCallback, _listener);
                 }
-                catch
-                {
+                catch {
                     //Console.WriteLine("Terminating TCP Server");
                     Stop();
                 }

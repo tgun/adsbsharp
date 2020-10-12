@@ -56,6 +56,7 @@
             this.shareCb = new System.Windows.Forms.CheckBox();
             this.label6 = new System.Windows.Forms.Label();
             this.hostnameTb = new System.Windows.Forms.TextBox();
+            this.biasTeeCheckbox = new System.Windows.Forms.CheckBox();
             ((System.ComponentModel.ISupportInitialize)(this.tunerGainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.frequencyCorrectionNumericUpDown)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -176,6 +177,7 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.biasTeeCheckbox);
             this.groupBox1.Controls.Add(this.label1);
             this.groupBox1.Controls.Add(this.rtlAgcCheckBox);
             this.groupBox1.Controls.Add(this.deviceComboBox);
@@ -379,6 +381,17 @@
             this.hostnameTb.TabIndex = 37;
             this.hostnameTb.Text = "sdrsharp.com";
             // 
+            // biasTeeCheckbox
+            // 
+            this.biasTeeCheckbox.AutoSize = true;
+            this.biasTeeCheckbox.Location = new System.Drawing.Point(143, 68);
+            this.biasTeeCheckbox.Name = "biasTeeCheckbox";
+            this.biasTeeCheckbox.Size = new System.Drawing.Size(68, 17);
+            this.biasTeeCheckbox.TabIndex = 30;
+            this.biasTeeCheckbox.Text = "Bias-Tee";
+            this.biasTeeCheckbox.UseVisualStyleBackColor = true;
+            this.biasTeeCheckbox.CheckedChanged += new System.EventHandler(this.biasTeeCheckbox_CheckedChanged);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -442,6 +455,7 @@
         private System.Windows.Forms.CheckBox shareCb;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox hostnameTb;
+        private System.Windows.Forms.CheckBox biasTeeCheckbox;
     }
 }
 
