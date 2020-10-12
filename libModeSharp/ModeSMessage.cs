@@ -8,13 +8,22 @@ namespace libModeSharp {
     public enum ModeSMessageType {
 
     }
+
+    public enum ModeSUnit {
+        Feet = 0,
+        Meters
+    }
+
     /// <summary>
     /// Class representing a single ModeS Frame
     /// </summary>
     public class ModeSMessage {
-        private const bool FixErrors = false;
+        private const bool FixErrors = true;
         public const int ModesLongMessageBytes = 14; // -- 112 bits
         public const int ModesShortMessageBytes = 7; // -- 56 bits
+        private const int ModesIcaoCacheLength = 1024; // -- Power of two required.
+        private const int ICAOCacheTTL = 60;
+        private static uint[] ICAOCache;
         public byte[] RawMessage;
         public int MessageType { get; set; }
         public bool IsCrcOk { get; set; }
@@ -58,6 +67,9 @@ namespace libModeSharp {
         public int Altitude { get; set; }
         public int Unit { get; set; }
 
+        public static void Init() {
+            ICAOCache = new uint[ModesIcaoCacheLength];
+        }
         public static uint Checksum(byte[] message, int bits) {
             uint result = 0;
             int offset = (bits == 112) ? 0 : (112 - 56);
@@ -168,6 +180,125 @@ namespace libModeSharp {
 
                 result.Identity = a * 1000 + b * 100 + c * 10 + d;
             }
+
+            // -- DF 11 & 17; Populate ICAO Whitelist. For DFs with an AP field, try to decode it.
+            if (result.MessageType != 11 && result.MessageType != 17) {
+                result.IsCrcOk = BruteForceAP(ref result);
+            }
+            else {
+                // -- If this is DF11 or 17 and checksum is ok, we can add this to list of recently seen.
+                if (result.IsCrcOk && result.ErrorBit == -1) {
+                    var address = (uint)((result.Aa1 << 16) | (result.Aa2 << 8) | (result.Aa3));
+                    AddRecentlySeenICAOAddress(address);
+                }
+            }
+
+            // -- Decode 13 bit altitude for DF0,16,20
+            if (result.MessageType == 0 || result.MessageType == 4 || result.MessageType == 16 ||
+                result.MessageType == 20) {
+                var altitudeUnit = 0;
+                result.Altitude = DecodeAC13Field(result.RawMessage, ref altitudeUnit);
+                result.Unit = altitudeUnit;
+            }
+
+            // -- Extended squitter specific stuff
+            if (result.MessageType == 17) {
+
+            }
+
+            result.IsPhaseCorrected = false;
+            return result;
+        }
+
+        private static bool WasICAORecentlySeen(uint address) {
+            uint hashAddress = ICAOCacheHashAddress(address);
+            uint addr = ICAOCache[hashAddress * 2];
+            uint time = ICAOCache[(hashAddress * 2) + 1];
+
+            double currentTime = GetUnixTime();
+
+            return address == addr && (currentTime - time) <= ICAOCacheTTL;
+        }
+
+        private static bool BruteForceAP(ref ModeSMessage message) {
+            var aux = new byte[ModesLongMessageBytes];
+            int messageType = message.MessageType;
+            int messageBits = message.RawMessage.Length * 8;
+
+            if (messageType != 0 && messageType != 4 && messageType != 5 && messageType != 16 && messageType != 20 &&
+                messageType != 21 && messageType != 24) 
+                return false;
+
+            int lastByte = (messageBits / 8) - 1;
+            Array.Copy(message.RawMessage, aux, messageBits / 8);
+
+            // -- Compute the CRC of the message and XOR it with the AP field to recover the address.
+            // -- (ADDR xor CRC) xor CRC = ADDR
+
+            uint crc = Checksum(aux, messageBits);
+
+            aux[lastByte] ^= (byte)(crc & 0xff);
+            aux[lastByte - 1] ^= (byte)((crc >> 8) & 0xff);
+            aux[lastByte - 2] ^= (byte)((crc >> 16) & 0xff);
+
+            var address = (uint)(aux[lastByte] | (aux[lastByte - 1] << 8) | (aux[lastByte - 2] << 16));
+
+            if (!WasICAORecentlySeen(address)) 
+                return false;
+
+            message.Aa1 = aux[lastByte - 2];
+            message.Aa2 = aux[lastByte - 1];
+            message.Aa3 = aux[lastByte];
+
+            return true;
+
+        }
+        /// <summary>
+        /// Hash the ICAO Address to index our cache of ICAO_CACHE_LEN elements, that is assumed to be a power of two.
+        /// </summary>
+        /// <param name="address"></param>
+        /// <returns></returns>
+        private static uint ICAOCacheHashAddress(uint address) {
+            // -- The following 3 rounds will make sure that every bit affects every output bit with ~ 50% probability.
+            address = ((address >> 16) ^ address) * 0x45d9f3b;
+            address = ((address >> 16) ^ address) * 0x45d9f3b;
+            address = ((address >> 16) ^ address);
+            return address & (ModesIcaoCacheLength - 1);
+        }
+
+        private static void AddRecentlySeenICAOAddress(uint address) {
+            uint hashAddress = ICAOCacheHashAddress(address);
+            ICAOCache[hashAddress * 2] = address;
+            ICAOCache[hashAddress * 2 + 1] = (uint) GetUnixTime();
+        }
+
+        private static double GetUnixTime() {
+            return (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        }
+
+        private static int DecodeAC13Field(byte[] message, ref int unit) {
+            int mBit = message[3] & (1 << 6);
+            int qBit = message[3] & (1 << 4);
+
+            if (!(mBit > 0)) {
+                unit =(int) ModeSUnit.Feet;
+                if (qBit > 0) {
+                    // -- N is the 11 bit integer resulting from the removal of bit Q and M
+                    int n = ((message[2] & 31) << 6) |
+                            ((message[3] & 0x80) >> 2) |
+                            ((message[3] & 0x20) >> 1) |
+                            (message[3] & 15);
+                    // -- Final altitude is due to the resutling number multiplied by 25, minus 1000.
+                    return n * 25 - 1000;
+                }
+                // -- TODO: Altitude when Q=0 and M=0
+            }
+            else {
+                unit = (int)ModeSUnit.Meters;
+                // - -TODO: Altitude in meters.
+            }
+
+            return 0;
         }
     }
 }
