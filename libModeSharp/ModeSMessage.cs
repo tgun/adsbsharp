@@ -43,11 +43,12 @@ namespace libModeSharp {
         public bool HeadingIsValid { get; set; }
         public int Heading { get; set; }
         public int AircraftType { get; set; }
+        public uint ICAO { get; set; }
         public int Fflag { get; set; }                 /* 1 = Odd, 0 = Even CPR message. */
         public int Tflag { get; set; }                 /* UTC synchronized? */
         public int RawLatitude { get; set; }           /* Non decoded latitude */
         public int RawLongitude { get; set; }          /* Non decoded longitude */
-        public byte[] Flight { get; set; }             /* 8 chars flight number. size of 9 */
+        public string Flight { get; set; }             /* 8 chars flight number. size of 9 */
         public int EwDir { get; set; }                 /* 0 = East, 1 = West. */
         public int EwVelocity { get; set; }            /* E/W velocity. */
         public int NsDir { get; set; }                 /* 0 = North, 1 = South. */
@@ -60,7 +61,7 @@ namespace libModeSharp {
         /* DF4, DF5, DF20, DF21 */
         public int FlightStatus { get; set; }                     /* Flight status for DF4,5,20,21 */
         public int DownlinkRequest { get; set; }                     /* Request extraction of downlink request. */
-        public int Um { get; set; }                            /* Request extraction of downlink request. */
+        public int UtilityMessage { get; set; }                            /* Request extraction of downlink request. */
         public int Identity { get; set; }               /* 13 bits identity (Squawk). */
 
         /* Fields used by multiple message types. */
@@ -68,7 +69,7 @@ namespace libModeSharp {
         public int Unit { get; set; }
 
         public static void Init() {
-            ICAOCache = new uint[ModesIcaoCacheLength];
+            ICAOCache = new uint[ModesIcaoCacheLength*2];
         }
         public static uint Checksum(byte[] message, int bits) {
             uint result = 0;
@@ -94,6 +95,11 @@ namespace libModeSharp {
                    (uint)message[bytes - 1];
         }
 
+        /// <summary>
+        /// Return the expected message size of the incoming frame in bytes
+        /// </summary>
+        /// <param name="type">Frame Message Type</param>
+        /// <returns></returns>
         public static int GetMessageLength(int type) {
             if (type == 16 || type == 17 || type == 19 || type == 20 || type == 21)
                 return ModesLongMessageBytes;
@@ -101,25 +107,31 @@ namespace libModeSharp {
             return ModesShortMessageBytes;
         }
 
+        /// <summary>
+        /// Utilizes a message CRC to attempt to fix accidentially flipped bits.
+        /// </summary>
+        /// <param name="message"></param>
+        /// <param name="bits"></param>
+        /// <returns></returns>
         public static int FixSingleBitErrors(ref byte[] message, int bits) {
-            byte[] aux = new byte[ModesLongMessageBytes];
+            var aux = new byte[ModesLongMessageBytes];
             int bytes = bits / 8;
 
-            for (int j = 0; j < bits; j++) {
+            for (var j = 0; j < bits; j++) {
                 int i = j / 8;
                 int bitmask = 1 << (7 - (j % 8));
-                uint crc1, crc2;
                 Array.Copy(message, aux, bytes);
                 aux[i] ^= (byte) bitmask; // -- Flip j-th bit
 
-                crc1 = Checksum1(aux, bytes * 8);
+                uint crc1 = Checksum1(aux, bytes * 8);
+                uint crc2 = Checksum(aux, bits);
+                
+                if (crc1 != crc2) 
+                    continue;
 
-                crc2 = Checksum(aux, bits);
-                if (crc1 == crc2) {
-                    // -- Error has been fixed. Overwrite the original with the corrected sequence.
-                    Array.Copy(aux, message, bytes);
-                    return j;
-                }
+                // -- Error has been fixed. Overwrite the original with the corrected sequence.
+                Array.Copy(aux, message, bytes);
+                return j;
             }
 
             return -1;
@@ -152,6 +164,7 @@ namespace libModeSharp {
             result.Aa1 = message[1]; // -- ICAO address
             result.Aa2 = message[2];
             result.Aa3 = message[3];
+            result.ICAO = (uint)((result.Aa1 << 16) | (result.Aa2 << 8) | (result.Aa3));
 
             // -- DF-17 Type
             result.MessageTypeExtended = message[4] >> 3;
@@ -160,7 +173,7 @@ namespace libModeSharp {
             // -- Fields for DF4,5,20,21.
             result.FlightStatus = message[0] & 7;
             result.DownlinkRequest = message[1] >> 3 & 31;
-            result.Um = ((message[1] & 7) << 3) | message[2] >> 5;
+            result.UtilityMessage = ((message[1] & 7) << 3) | message[2] >> 5;
 
             { // -- squawk  decoding.
                 int a, b, c, d;
@@ -188,7 +201,7 @@ namespace libModeSharp {
             else {
                 // -- If this is DF11 or 17 and checksum is ok, we can add this to list of recently seen.
                 if (result.IsCrcOk && result.ErrorBit == -1) {
-                    var address = (uint)((result.Aa1 << 16) | (result.Aa2 << 8) | (result.Aa3));
+                    var address = (uint) result.ICAO;
                     AddRecentlySeenICAOAddress(address);
                 }
             }
@@ -203,13 +216,49 @@ namespace libModeSharp {
 
             // -- Extended squitter specific stuff
             if (result.MessageType == 17) {
-
+                if (result.MessageTypeExtended >= 1 && result.MessageTypeExtended <= 4) {
+                    // -- Aircraft Flight Information
+                    result.AircraftType = result.MessageTypeExtended - 1;
+                    result.Flight = GetAircraftIdentifier(message);
+                } else if (result.MessageTypeExtended >= 9 && result.MessageTypeExtended <= 18) {
+                    // -- Position message
+                    var positionUnit = 0;
+                    result.Fflag = message[6] & (1 << 2);
+                    result.Tflag = message[6] & (1 << 3);
+                    result.Altitude = DecodeAC12Field(message, ref positionUnit);
+                    result.RawLatitude = ((message[6] & 3) << 15) |
+                                         (message[7] << 7) |
+                                         (message[8] >> 1);
+                    result.RawLongitude = ((message[8] & 1) << 16) |
+                                          (message[9] << 8) |
+                                          message[10];
+                } else if (result.MessageTypeExtended == 19 && result.MessageSubType >= 1 &&
+                           result.MessageSubType <= 4) {
+                    // -- Velocity Message
+                } else if (result.MessageSubType == 3 || result.MessageSubType == 4) {
+                    // -- Heading message.
+                    result.HeadingIsValid = (message[5] & (1 << 2)) > 0;
+                    result.Heading = (int)((360.0 / 128) * (((message[5] & 3) << 5) | (message[6] >> 3)));
+                }
             }
 
             result.IsPhaseCorrected = false;
             return result;
         }
 
+        private static string GetAircraftIdentifier(byte[] message) {
+            var aisCharset = "?ABCDEFGHIJKLMNOPQRSTUVWXYZ?????_???????????????0123456789??????";
+            var result = "";
+            result += aisCharset[message[5] >> 2];
+            result += aisCharset[((message[5] & 3) << 4) | message[6] >> 4];
+            result += aisCharset[((message[6] & 15) << 2) | (message[7] >> 6)];
+            result += aisCharset[message[7] & 63];
+            result += aisCharset[message[8] >> 2];
+            result += aisCharset[((message[8] & 3) << 4) | (message[9] >> 4)];
+            result += aisCharset[((message[9] & 15) << 2) | (message[10] >> 6)];
+            result += aisCharset[message[10] & 63];
+            return result;
+        }
         private static bool WasICAORecentlySeen(uint address) {
             uint hashAddress = ICAOCacheHashAddress(address);
             uint addr = ICAOCache[hashAddress * 2];
@@ -274,6 +323,20 @@ namespace libModeSharp {
 
         private static double GetUnixTime() {
             return (DateTime.UtcNow - new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalSeconds;
+        }
+
+        private static int DecodeAC12Field(byte[] message, ref int unit) {
+            int qBit = message[5] & 1;
+
+            if (qBit > 0) {
+                // -- N is the 11 bit integer resulting from the removal of the q bit.
+                unit = (int)ModeSUnit.Feet;
+                int n = ((message[5] >> 1) << 4) | ((message[6] & 0xf0) >> 4);
+                // -- Final altitutde is due to the resulting number multiplied by 25, minus 1000.
+                return n * 25 - 1000;
+            }
+
+            return 0;
         }
 
         private static int DecodeAC13Field(byte[] message, ref int unit) {
