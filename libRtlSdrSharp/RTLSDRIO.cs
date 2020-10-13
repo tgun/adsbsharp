@@ -1,7 +1,6 @@
 ﻿using System;
 
 namespace libRtlSdrSharp {
-    public unsafe delegate void SamplesReadyDelegate(object sender, Complex* data, int length);
     public class DeviceDisplay {
         public uint Index { get; private set; }
         public string Name { get; set; }
@@ -23,9 +22,11 @@ namespace libRtlSdrSharp {
         }
     }
 
-    public unsafe class RtlSdrIO : IDisposable {
+    public class RtlSdrIO : IDisposable {
         private uint _frequency = 1090000000;
-        private SamplesReadyDelegate _callback;
+        public ushort[] Magnitude = new ushort[RtlDevice.ReadLength + 119 * 4]; // -- MODES_DATA_LEN + (MODES_FULL_LEN-1)*4;
+        private ushort[] MagnitudeLookup = new ushort[129*129];
+        private DataReady _callback;
 
         ~RtlSdrIO() {
             Dispose();
@@ -38,8 +39,36 @@ namespace libRtlSdrSharp {
         public void SelectDevice(uint index) {
             Close();
             Device = new RtlDevice(index);
-            Device.SamplesAvailable += rtlDevice_SamplesAvailable;
+            Device.RtlSdrDataAvailable += DeviceOnRtlSdrDataAvailable;
             Device.Frequency = _frequency;
+        }
+
+        private void DeviceOnRtlSdrDataAvailable() {
+            byte[] myData;
+
+            lock (Device.BufferLock) {
+                long size = Device.Buffer.Length - Device.Buffer.Position; 
+                myData = new byte[size];
+                Device.Buffer.Read(myData, 0, (int)size);
+            }
+
+            if (myData == null || myData.Length == 0)
+                return;
+
+            ComputeMagnitudeVector(myData);
+            
+            _callback?.Invoke(myData);
+        }
+
+        private void ComputeMagnitudeVector(byte[] data) {
+            for (var j = 0; j < data.Length; j += 2) {
+                int i = data[j] - 127;
+                int q = data[j + 1] - 127;
+
+                if (i < 0) i = -i;
+                if (q < 0) q = -q;
+                Magnitude[i / 2] = MagnitudeLookup[i * 129 + q];
+            }
         }
 
         public RtlDevice Device { get; private set; }
@@ -66,12 +95,12 @@ namespace libRtlSdrSharp {
                 return;
 
             Device.Stop();
-            Device.SamplesAvailable -= rtlDevice_SamplesAvailable;
+            Device.RtlSdrDataAvailable -= DeviceOnRtlSdrDataAvailable;
             Device.Dispose();
             Device = null;
         }
 
-        public void Start(SamplesReadyDelegate callback) {
+        public void Start(DataReady callback) {
             if (Device == null) {
                 throw new ApplicationException("No device selected");
             }
@@ -100,9 +129,7 @@ namespace libRtlSdrSharp {
                 }
             }
         }
-
-        private void rtlDevice_SamplesAvailable(object sender, SamplesAvailableEventArgs e) {
-            _callback(this, e.Buffer, e.Length);
-        }
     }
+
+    public delegate void DataReady(byte[] data);
 }

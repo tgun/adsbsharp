@@ -19,10 +19,7 @@ namespace libModeSharp {
     /// </summary>
     public class ModeSMessage {
         private const bool FixErrors = true;
-        public const int ModesLongMessageBytes = 14; // -- 112 bits
-        public const int ModesShortMessageBytes = 7; // -- 56 bits
-        private const int ModesIcaoCacheLength = 1024; // -- Power of two required.
-        private const int ICAOCacheTTL = 60;
+
         private static uint[] ICAOCache;
         public byte[] RawMessage;
         public int MessageType { get; set; }
@@ -69,7 +66,7 @@ namespace libModeSharp {
         public int Unit { get; set; }
 
         public static void Init() {
-            ICAOCache = new uint[ModesIcaoCacheLength*2];
+            ICAOCache = new uint[Constants.ModesIcaoCacheLength*2];
         }
         public static uint Checksum(byte[] message, int bits) {
             uint result = 0;
@@ -102,9 +99,9 @@ namespace libModeSharp {
         /// <returns></returns>
         public static int GetMessageLength(int type) {
             if (type == 16 || type == 17 || type == 19 || type == 20 || type == 21)
-                return ModesLongMessageBytes;
+                return Constants.ModesLongMessageBytes;
 
-            return ModesShortMessageBytes;
+            return Constants.ModesShortMessageBytes;
         }
 
         /// <summary>
@@ -114,7 +111,7 @@ namespace libModeSharp {
         /// <param name="bits"></param>
         /// <returns></returns>
         public static int FixSingleBitErrors(ref byte[] message, int bits) {
-            var aux = new byte[ModesLongMessageBytes];
+            var aux = new byte[Constants.ModesLongMessageBytes];
             int bytes = bits / 8;
 
             for (var j = 0; j < bits; j++) {
@@ -266,11 +263,11 @@ namespace libModeSharp {
 
             double currentTime = GetUnixTime();
 
-            return address == addr && (currentTime - time) <= ICAOCacheTTL;
+            return address == addr && (currentTime - time) <= Constants.ICAOCacheTTL;
         }
 
         private static bool BruteForceAP(ref ModeSMessage message) {
-            var aux = new byte[ModesLongMessageBytes];
+            var aux = new byte[Constants.ModesLongMessageBytes];
             int messageType = message.MessageType;
             int messageBits = message.RawMessage.Length * 8;
 
@@ -312,7 +309,7 @@ namespace libModeSharp {
             address = ((address >> 16) ^ address) * 0x45d9f3b;
             address = ((address >> 16) ^ address) * 0x45d9f3b;
             address = ((address >> 16) ^ address);
-            return address & (ModesIcaoCacheLength - 1);
+            return address & (Constants.ModesIcaoCacheLength - 1);
         }
 
         private static void AddRecentlySeenICAOAddress(uint address) {

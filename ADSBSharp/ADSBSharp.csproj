@@ -46,11 +46,19 @@
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AdsbBitDecoder.cs" />
     <Compile Include="AdsbHubClient.cs" />
+    <Compile Include="AlternateDecoder.cs" />
     <Compile Include="IFrameSink.cs" />
+    <Compile Include="MessageDisplay.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="MessageDisplay.Designer.cs">
+      <DependentUpon>MessageDisplay.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Mainform.cs">
@@ -60,6 +68,9 @@
       <DependentUpon>Mainform.cs</DependentUpon>
     </Compile>
     <Compile Include="SimpleTCPServer.cs" />
+    <EmbeddedResource Include="MessageDisplay.resx">
+      <DependentUpon>MessageDisplay.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -97,6 +108,10 @@
     <Content Include="radar.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\libModeSharp\libModeSharp.csproj">
+      <Project>{c683f370-e4f1-440f-b830-90a2ce5bafed}</Project>
+      <Name>libModeSharp</Name>
+    </ProjectReference>
     <ProjectReference Include="..\libRtlSdrSharp\libRtlSdrSharp.csproj">
       <Project>{0de99142-09c0-4841-a6d7-0c8356d6a5b5}</Project>
       <Name>libRtlSdrSharp</Name>

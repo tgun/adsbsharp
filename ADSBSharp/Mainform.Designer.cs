@@ -41,6 +41,7 @@
             this.tunerTypeLabel = new System.Windows.Forms.Label();
             this.rtlAgcCheckBox = new System.Windows.Forms.CheckBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.biasTeeCheckbox = new System.Windows.Forms.CheckBox();
             this.startBtn = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.label7 = new System.Windows.Forms.Label();
@@ -56,7 +57,7 @@
             this.shareCb = new System.Windows.Forms.CheckBox();
             this.label6 = new System.Windows.Forms.Label();
             this.hostnameTb = new System.Windows.Forms.TextBox();
-            this.biasTeeCheckbox = new System.Windows.Forms.CheckBox();
+            this.btnDebug = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.tunerGainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.frequencyCorrectionNumericUpDown)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -194,6 +195,17 @@
             this.groupBox1.TabIndex = 30;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "RTL-SDR Control";
+            // 
+            // biasTeeCheckbox
+            // 
+            this.biasTeeCheckbox.AutoSize = true;
+            this.biasTeeCheckbox.Location = new System.Drawing.Point(143, 68);
+            this.biasTeeCheckbox.Name = "biasTeeCheckbox";
+            this.biasTeeCheckbox.Size = new System.Drawing.Size(68, 17);
+            this.biasTeeCheckbox.TabIndex = 30;
+            this.biasTeeCheckbox.Text = "Bias-Tee";
+            this.biasTeeCheckbox.UseVisualStyleBackColor = true;
+            this.biasTeeCheckbox.CheckedChanged += new System.EventHandler(this.biasTeeCheckbox_CheckedChanged);
             // 
             // startBtn
             // 
@@ -381,22 +393,23 @@
             this.hostnameTb.TabIndex = 37;
             this.hostnameTb.Text = "sdrsharp.com";
             // 
-            // biasTeeCheckbox
+            // btnDebug
             // 
-            this.biasTeeCheckbox.AutoSize = true;
-            this.biasTeeCheckbox.Location = new System.Drawing.Point(143, 68);
-            this.biasTeeCheckbox.Name = "biasTeeCheckbox";
-            this.biasTeeCheckbox.Size = new System.Drawing.Size(68, 17);
-            this.biasTeeCheckbox.TabIndex = 30;
-            this.biasTeeCheckbox.Text = "Bias-Tee";
-            this.biasTeeCheckbox.UseVisualStyleBackColor = true;
-            this.biasTeeCheckbox.CheckedChanged += new System.EventHandler(this.biasTeeCheckbox_CheckedChanged);
+            this.btnDebug.Enabled = false;
+            this.btnDebug.Location = new System.Drawing.Point(93, 12);
+            this.btnDebug.Name = "btnDebug";
+            this.btnDebug.Size = new System.Drawing.Size(53, 23);
+            this.btnDebug.TabIndex = 38;
+            this.btnDebug.Text = "Debug";
+            this.btnDebug.UseVisualStyleBackColor = true;
+            this.btnDebug.Click += new System.EventHandler(this.btnDebug_Click);
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(294, 357);
+            this.Controls.Add(this.btnDebug);
             this.Controls.Add(this.hostnameTb);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.shareCb);
@@ -456,6 +469,7 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox hostnameTb;
         private System.Windows.Forms.CheckBox biasTeeCheckbox;
+        private System.Windows.Forms.Button btnDebug;
     }
 }
 

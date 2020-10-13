@@ -8,7 +8,9 @@ namespace ADSBSharp {
     public unsafe partial class MainForm : Form {
         private IFrameSink _frameSink;
         private readonly AdsbBitDecoder _decoder = new AdsbBitDecoder();
+        private readonly AlternateDecoder _alternateDecoder = new AlternateDecoder();
         private readonly RtlSdrIO _rtlDevice = new RtlSdrIO();
+        private MessageDisplay _displayWindow;
         private bool _isDecoding;
         private bool _initialized;
         private int _frameCount;
@@ -205,15 +207,9 @@ namespace ADSBSharp {
 
         #region Samples Callback
 
-        private void rtl_SamplesAvailable(object sender, Complex* buf, int length) {
-            for (var i = 0; i < length; i++) {
-                int real = buf[i].Real;
-                int imag = buf[i].Imag;
-
-                int mag = real * real + imag * imag;
-
-                _decoder.ProcessSample(mag);
-            }
+        private void rtl_SamplesAvailable(byte[] data) {
+            _alternateDecoder.ReceiveRtlData(data);
+            //_decoder.ProcessSample(mag);
         }
 
         #endregion
@@ -257,6 +253,15 @@ namespace ADSBSharp {
             }
 
             _rtlDevice.Device.UseBiasTee = biasTeeCheckbox.Checked;
+        }
+
+        private void btnDebug_Click(object sender, EventArgs e) {
+            if (_displayWindow != null && _displayWindow.IsDisposed == false && _displayWindow.Visible == true)
+                return;
+
+            _displayWindow = new MessageDisplay();
+            _decoder.FrameReceived += _displayWindow.ReceiveOldFrame;
+
         }
     }
 }

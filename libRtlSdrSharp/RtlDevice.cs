@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 namespace libRtlSdrSharp {
@@ -8,7 +9,7 @@ namespace libRtlSdrSharp {
         DirectSamplingQ
     }
 
-    public sealed unsafe class RtlDevice : IDisposable {
+    public sealed class RtlDevice : IDisposable {
         private const uint DefaultFrequency = 1090000000;
         private const int DefaultSampleRate = 2000000;
         private IntPtr _dev;
@@ -20,13 +21,10 @@ namespace libRtlSdrSharp {
         private int _frequencyCorrection;
         private SamplingMode _samplingMode;
         private bool _useOffsetTuning;
-        private GCHandle _gcHandle;
-        private UnsafeBuffer _iqBuffer;
-        private Complex* _iqPtr;
+        public object BufferLock = new object();
+        public MemoryStream Buffer;
         private Thread _worker;
-        private readonly SamplesAvailableEventArgs _eventArgs = new SamplesAvailableEventArgs();
-        private static readonly RtlSdrReadAsyncDelegate RtlCallback = RtlSdrSamplesAvailable;
-        private static readonly uint _readLength = 16 * 1024;
+        public static readonly uint ReadLength = (16 * 16384);   /* 256k */
 
         public RtlDevice(uint index) {
             Index = index;
@@ -44,24 +42,13 @@ namespace libRtlSdrSharp {
                 LibraryWrapper.rtlsdr_get_tuner_gains(_dev, SupportedGains);
             }
             Name = LibraryWrapper.rtlsdr_get_device_name(Index);
-            _gcHandle = GCHandle.Alloc(this);
-        }
-
-        ~RtlDevice() {
-            Dispose();
         }
 
         public void Dispose() {
             Stop();
             LibraryWrapper.rtlsdr_close(_dev);
-            if (_gcHandle.IsAllocated) {
-                _gcHandle.Free();
-            }
             _dev = IntPtr.Zero;
-            GC.SuppressFinalize(this);
         }
-
-        public event SamplesAvailableDelegate SamplesAvailable;
 
         public void Start() {
             if (_worker != null) {
@@ -211,17 +198,13 @@ namespace libRtlSdrSharp {
         #region Streaming methods
 
         private void StreamProc() {
-            LibraryWrapper.rtlsdr_read_async(_dev, RtlCallback, (IntPtr)_gcHandle, 0, _readLength);
+            LibraryWrapper.rtlsdr_read_async(_dev, RtlSdrSamplesAvailable, IntPtr.Zero, 0, ReadLength);
         }
 
-        private void ComplexSamplesAvailable(Complex* buffer, int length) {
-            if (SamplesAvailable == null) return;
-            _eventArgs.Buffer = buffer;
-            _eventArgs.Length = length;
-            SamplesAvailable(this, _eventArgs);
-        }
+        private void RtlSdrSamplesAvailable(IntPtr buf, uint len, IntPtr ctx) {
+            var actualBuffer = new byte[len];
+            Marshal.Copy(buf, actualBuffer, 0, (int)len); // -- Copy the data out of the native pointer based memory area into managed memory
 
-        private static void RtlSdrSamplesAvailable(byte* buf, uint len, IntPtr ctx) {
             GCHandle gcHandle = GCHandle.FromIntPtr(ctx);
             if (!gcHandle.IsAllocated) {
                 return;
@@ -229,30 +212,24 @@ namespace libRtlSdrSharp {
             var instance = (RtlDevice)gcHandle.Target;
 
             int sampleCount = (int)len / 2;
-            if (instance._iqBuffer == null || instance._iqBuffer.Length != sampleCount) {
-                instance._iqBuffer = UnsafeBuffer.Create(sampleCount, sizeof(Complex));
-                instance._iqPtr = (Complex*)instance._iqBuffer;
-            }
-            Complex* ptr = instance._iqPtr;
-            for (var i = 0; i < sampleCount; i++) {
-                ptr->Imag = *buf++ * 10 - 1275;
-                ptr->Real = *buf++ * 10 - 1275;
-                ptr++;
+
+            lock (BufferLock) {
+                Buffer.Write(actualBuffer, 0, (int) len); // --  Write the incoming data to our memoryStream buffer.
             }
 
-            instance.ComplexSamplesAvailable(instance._iqPtr, instance._iqBuffer.Length);
+            RtlSdrDataAvailable?.Invoke();
         }
+
+        public event EmptyEventDelegate RtlSdrDataAvailable;
 
         #endregion
     }
 
-    public delegate void SamplesAvailableDelegate(object sender, SamplesAvailableEventArgs e);
+    public delegate void EmptyEventDelegate();
 
-    public sealed unsafe class SamplesAvailableEventArgs : EventArgs {
-        public int Length { get; set; }
-        public Complex* Buffer { get; set; }
-    }
-
+    /// <summary>
+    /// Complex is a struct used to point to a given location inside of an UnsafeBuffer reference
+    /// </summary>
     public struct Complex {
         public int Real;
         public int Imag;

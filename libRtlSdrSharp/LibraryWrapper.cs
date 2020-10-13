@@ -1,14 +1,12 @@
 ﻿using System;
-using System.Net.NetworkInformation;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace libRtlSdrSharp {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
-    public unsafe delegate void RtlSdrReadAsyncDelegate(byte* buf, uint len, IntPtr ctx);
+    public delegate void RtlSdrReadAsyncDelegate(IntPtr buf, uint len, IntPtr ctx);
 
-    public enum RtlSdrTunerType {
+    public enum RtlSdrTunerType { 
         Unknown = 0,
         E4000,
         FC0012,
@@ -17,6 +15,9 @@ namespace libRtlSdrSharp {
         R820T
     }
 
+    /// <summary>
+    /// Basic C# Wrapper around rtlsdr.dll to provide .net interop with the native dll.
+    /// </summary>
     public class LibraryWrapper {
         private const string LibRtlSdr = "rtlsdr";
 
