@@ -13,3 +13,6 @@ D:\Documents\git\adsbsharp\ADSBSharp\obj\x86\Debug\ADSBSharp.pdb
 D:\Documents\git\adsbsharp\ADSBSharp\bin\Debug\include\libusb-1.0.dll
 D:\Documents\git\adsbsharp\ADSBSharp\bin\Debug\include\msvcr100.dll
 D:\Documents\git\adsbsharp\ADSBSharp\bin\Debug\include\rtlsdr.dll
+D:\Documents\git\adsbsharp\ADSBSharp\bin\Debug\libModeSharp.dll
+D:\Documents\git\adsbsharp\ADSBSharp\bin\Debug\libModeSharp.pdb
+D:\Documents\git\adsbsharp\ADSBSharp\obj\x86\Debug\ADSBSharp.MessageDisplay.resources

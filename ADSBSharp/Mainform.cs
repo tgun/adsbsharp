@@ -69,20 +69,28 @@ namespace ADSBSharp {
             }
         }
 
+        private int GetCurrentlySelectedItemIndex() {
+            KeyValuePair<int, string> item = _rtlDevices.FirstOrDefault(a => a.Value == (string)deviceComboBox.SelectedItem);
+            return item.Value == null ? -1 : item.Key;
+        }
+
         private void deviceComboBox_SelectedIndexChanged(object sender, EventArgs e) {
-            var deviceDisplay = (DeviceDisplay)deviceComboBox.SelectedItem;
+            var deviceDisplay = (string)deviceComboBox.SelectedItem;
             
             if (deviceDisplay == null) 
                 return;
 
             try {
+                _selectedDeviceIndex = GetCurrentlySelectedItemIndex();
+
+                if (_selectedDeviceIndex == -1)
+                    return;
+
                 if (_initialized) {
                     _rtlDevice.Stop();
                     _rtlDevice.Dispose();
                 }
 
-                _selectedDeviceIndex = deviceDisplay.Index;
-                
                 _rtlDevice = new RtlDevice(_selectedDeviceIndex);
                 _rtlDevice.DataAvailable += _rtlDevice_DataAvailable;
                 _rtlDevice.Frequency = 1090000000;
@@ -155,9 +163,9 @@ namespace ADSBSharp {
             tunerGainTrackBar.Value = tunerGainTrackBar.Maximum;
 
             for (var i = 0; i < deviceComboBox.Items.Count; i++) {
-                var deviceDisplay = (DeviceDisplay)deviceComboBox.Items[i];
+                var deviceIndex = _rtlDevices.FirstOrDefault((a) => a.Value == (string)deviceComboBox.Items[i]).Key;
                 
-                if (deviceDisplay.Index != _rtlDevice.Device.Index) 
+                if (deviceIndex != _rtlDevice.Index) 
                     continue;
 
                 deviceComboBox.SelectedIndex = i;
@@ -192,7 +200,7 @@ namespace ADSBSharp {
             }
 
             try {
-                _rtlDevice.Start(rtl_SamplesAvailable);
+                _rtlDevice.Start();
             }
             catch (Exception e) {
                 StopDecoding();
@@ -213,16 +221,6 @@ namespace ADSBSharp {
         }
 
         #endregion
-
-        #region Samples Callback
-
-        private void rtl_SamplesAvailable(byte[] data) {
-            _alternateDecoder.ReceiveRtlData(data);
-            //_decoder.ProcessSample(mag);
-        }
-
-        #endregion
-
         private void fpsTimer_Tick(object sender, EventArgs e) {
             float fps = (_frameCount) * 1000.0f / fpsTimer.Interval;
             _frameCount = 0;
