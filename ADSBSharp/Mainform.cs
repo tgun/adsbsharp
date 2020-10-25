@@ -1,24 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
 using libRtlSdrSharp;
+using System.Linq;
 
 namespace ADSBSharp {
     public unsafe partial class MainForm : Form {
         private IFrameSink _frameSink;
+        private int _selectedDeviceIndex = 0;
         private readonly AdsbBitDecoder _decoder = new AdsbBitDecoder();
-        private readonly AlternateDecoder _alternateDecoder = new AlternateDecoder();
-        private readonly RtlSdrIO _rtlDevice = new RtlSdrIO();
+        private readonly AlternateDecoder _alternateDecoder;
+        private ISDRDevice _rtlDevice;
         private MessageDisplay _displayWindow;
         private bool _isDecoding;
         private bool _initialized;
         private int _frameCount;
         private float _avgFps;
+        private Dictionary<int, string> _rtlDevices;
 
         public MainForm() {
             InitializeComponent();
-
             Text = "ADSB# v" + Assembly.GetExecutingAssembly().GetName().Version;
 
             _decoder.FrameReceived += delegate (byte[] frame, int length) {
@@ -31,13 +34,10 @@ namespace ADSBSharp {
             timeoutNumericUpDown_ValueChanged(null, null);
 
             try {
-                _rtlDevice.Open();
-
-                DeviceDisplay[] devices = DeviceDisplay.GetActiveDevices();
+                _rtlDevices = RtlDevice.GetAvailableDevices();
                 deviceComboBox.Items.Clear();
-                deviceComboBox.Items.AddRange(devices);
+                deviceComboBox.Items.AddRange(_rtlDevices.Values.ToArray());
 
-                //_initialized = true;
                 deviceComboBox.SelectedIndex = 0;
                 deviceComboBox_SelectedIndexChanged(null, null);
             }
@@ -57,10 +57,10 @@ namespace ADSBSharp {
             }
 
             startBtn.Text = _isDecoding ? "Stop" : "Start";
-            deviceComboBox.Enabled = !_rtlDevice.Device.IsStreaming;
-            portNumericUpDown.Enabled = !_rtlDevice.Device.IsStreaming;
-            shareCb.Enabled = !_rtlDevice.Device.IsStreaming;
-            hostnameTb.Enabled = !_rtlDevice.Device.IsStreaming && shareCb.Checked;
+            deviceComboBox.Enabled = !_rtlDevice.IsStreaming;
+            portNumericUpDown.Enabled = !_rtlDevice.IsStreaming;
+            shareCb.Enabled = !_rtlDevice.IsStreaming;
+            hostnameTb.Enabled = !_rtlDevice.IsStreaming && shareCb.Checked;
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e) {
@@ -70,19 +70,24 @@ namespace ADSBSharp {
         }
 
         private void deviceComboBox_SelectedIndexChanged(object sender, EventArgs e) {
-            //if (!_initialized)
-            //{
-            //    return;
-            //}
             var deviceDisplay = (DeviceDisplay)deviceComboBox.SelectedItem;
             
             if (deviceDisplay == null) 
                 return;
 
             try {
-                _rtlDevice.SelectDevice(deviceDisplay.Index);
+                if (_initialized) {
+                    _rtlDevice.Stop();
+                    _rtlDevice.Dispose();
+                }
+
+                _selectedDeviceIndex = deviceDisplay.Index;
+                
+                _rtlDevice = new RtlDevice(_selectedDeviceIndex);
+                _rtlDevice.DataAvailable += _rtlDevice_DataAvailable;
                 _rtlDevice.Frequency = 1090000000;
-                _rtlDevice.Device.SampleRate = 2000000;
+                _rtlDevice.SampleRate = 2000000;
+                
                 _initialized = true;
             }
             catch (Exception ex) {
@@ -95,12 +100,16 @@ namespace ADSBSharp {
             ConfigureGUI();
         }
 
+        private void _rtlDevice_DataAvailable() {
+            throw new NotImplementedException();
+        }
+
         private void tunerGainTrackBar_Scroll(object sender, EventArgs e) {
             if (!_initialized) {
                 return;
             }
-            var gain = _rtlDevice.Device.SupportedGains[tunerGainTrackBar.Value];
-            _rtlDevice.Device.TunerGain = gain;
+            var gain = _rtlDevice.SupportedGains[tunerGainTrackBar.Value];
+            _rtlDevice.TunerGain = gain;
             gainLabel.Text = gain / 10.0 + " dB";
         }
 
@@ -109,7 +118,7 @@ namespace ADSBSharp {
                 return;
             }
             tunerGainTrackBar.Enabled = tunerAgcCheckBox.Enabled && !tunerAgcCheckBox.Checked;
-            _rtlDevice.Device.UseTunerAGC = tunerAgcCheckBox.Checked;
+            _rtlDevice.UseTunerAGC = tunerAgcCheckBox.Checked;
             gainLabel.Visible = tunerAgcCheckBox.Enabled && !tunerAgcCheckBox.Checked;
             if (!tunerAgcCheckBox.Checked) {
                 tunerGainTrackBar_Scroll(null, null);
@@ -120,14 +129,14 @@ namespace ADSBSharp {
             if (!_initialized) {
                 return;
             }
-            _rtlDevice.Device.FrequencyCorrection = (int)frequencyCorrectionNumericUpDown.Value;
+            _rtlDevice.FrequencyCorrection = (int)frequencyCorrectionNumericUpDown.Value;
         }
 
         private void rtlAgcCheckBox_CheckedChanged(object sender, EventArgs e) {
             if (!_initialized) {
                 return;
             }
-            _rtlDevice.Device.UseRtlAGC = rtlAgcCheckBox.Checked;
+            _rtlDevice.UseRtlAGC = rtlAgcCheckBox.Checked;
         }
 
         #endregion
@@ -141,8 +150,8 @@ namespace ADSBSharp {
                 return;
             }
 
-            tunerTypeLabel.Text = _rtlDevice.Device.TunerType.ToString();
-            tunerGainTrackBar.Maximum = _rtlDevice.Device.SupportedGains.Length - 1;
+            tunerTypeLabel.Text = _rtlDevice.TunerType.ToString();
+            tunerGainTrackBar.Maximum = _rtlDevice.SupportedGains.Length - 1;
             tunerGainTrackBar.Value = tunerGainTrackBar.Maximum;
 
             for (var i = 0; i < deviceComboBox.Items.Count; i++) {
@@ -252,7 +261,7 @@ namespace ADSBSharp {
                 return;
             }
 
-            _rtlDevice.Device.UseBiasTee = biasTeeCheckbox.Checked;
+            _rtlDevice.BiasTee = biasTeeCheckbox.Checked;
         }
 
         private void btnDebug_Click(object sender, EventArgs e) {
@@ -261,6 +270,10 @@ namespace ADSBSharp {
 
             _displayWindow = new MessageDisplay();
             _decoder.FrameReceived += _displayWindow.ReceiveOldFrame;
+
+        }
+
+        private void MainForm_Load(object sender, EventArgs e) {
 
         }
     }
