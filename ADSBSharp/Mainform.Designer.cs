@@ -58,6 +58,7 @@
             this.label6 = new System.Windows.Forms.Label();
             this.hostnameTb = new System.Windows.Forms.TextBox();
             this.btnDebug = new System.Windows.Forms.Button();
+            this.label8 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.tunerGainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.frequencyCorrectionNumericUpDown)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -220,6 +221,7 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.label8);
             this.groupBox2.Controls.Add(this.label7);
             this.groupBox2.Controls.Add(this.timeoutNumericUpDown);
             this.groupBox2.Controls.Add(this.label5);
@@ -311,7 +313,7 @@
             // fpsLabel
             // 
             this.fpsLabel.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.fpsLabel.Location = new System.Drawing.Point(195, 34);
+            this.fpsLabel.Location = new System.Drawing.Point(168, 34);
             this.fpsLabel.Name = "fpsLabel";
             this.fpsLabel.Size = new System.Drawing.Size(60, 20);
             this.fpsLabel.TabIndex = 34;
@@ -404,6 +406,16 @@
             this.btnDebug.UseVisualStyleBackColor = true;
             this.btnDebug.Click += new System.EventHandler(this.btnDebug_Click);
             // 
+            // label8
+            // 
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.Location = new System.Drawing.Point(221, 34);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(60, 20);
+            this.label8.TabIndex = 42;
+            this.label8.Text = "FPS";
+            this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -471,6 +483,7 @@
         private System.Windows.Forms.TextBox hostnameTb;
         private System.Windows.Forms.CheckBox biasTeeCheckbox;
         private System.Windows.Forms.Button btnDebug;
+        private System.Windows.Forms.Label label8;
     }
 }
 

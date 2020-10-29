@@ -11,7 +11,7 @@ namespace ADSBSharp {
         public AlternateDecoder(ISDRDevice _deviceIo) {
             GenerateMagnitudeLookupTable();
             _rtlDevice = _deviceIo;
-            _rtlDevice.DataAvailable += DeviceOnRtlSdrDataAvailable;
+            //_rtlDevice.DataAvailable += DeviceOnRtlSdrDataAvailable;
             ModeSMessage.Init();
         }
 
@@ -75,7 +75,7 @@ namespace ADSBSharp {
 
             Console.WriteLine("hi mom");
         }
-
+        public event FrameReceivedDelegate FrameReceived;
         private void DetectModeS(ushort[] data, int magLen) {
             bool useCorrection = false;
 
@@ -230,7 +230,7 @@ namespace ADSBSharp {
                     // -- snaps!
                     var myModesMesage = ModeSMessage.DecodeMessage(pMessage);
                     if (myModesMesage.IsCrcOk) {
-                        Console.WriteLine("I got a message mom!");
+                        FrameReceived?.Invoke(myModesMesage.RawMessage, myModesMesage.RawMessage.Length);
                     }
                     
                 }

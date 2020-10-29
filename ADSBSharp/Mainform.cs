@@ -17,7 +17,9 @@ namespace ADSBSharp {
         private bool _isDecoding;
         private bool _initialized;
         private int _frameCount;
+        private int _newFrameCount;
         private float _avgFps;
+        private float _newAvg;
         private Dictionary<int, string> _rtlDevices;
 
         public MainForm() {
@@ -109,7 +111,25 @@ namespace ADSBSharp {
         }
 
         private void _rtlDevice_DataAvailable() {
-            
+            short[] mySample = new short[0];
+
+            lock (_rtlDevice.BufferLock) {
+                if (_rtlDevice.SampleBufferDataReady > 0) {
+                    _rtlDevice.SampleBufferDataOut &= (15);
+                    mySample = new short[_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut].Length];
+                    Array.Copy(_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut], mySample, mySample.Length);
+                }
+            }
+
+            for (var i = 0; i < mySample.Length; i++) {
+                int derp = (mySample[i] & 0xFF00) >> 8;
+                int q = mySample[i] & 0xFF;
+                int mag = derp * derp + q * q;
+
+                _decoder.ProcessSample(mag);
+            }
+
+            _alternateDecoder.DeviceOnRtlSdrDataAvailable();
         }
 
         private void tunerGainTrackBar_Scroll(object sender, EventArgs e) {
@@ -200,6 +220,10 @@ namespace ADSBSharp {
             }
             
             _alternateDecoder = new AlternateDecoder(_rtlDevice);
+            _alternateDecoder.FrameReceived += delegate (byte[] frame, int length) {
+                Interlocked.Increment(ref _newFrameCount);
+                _frameSink.FrameReady(frame, length);
+            };
 
             try {
                 _rtlDevice.Start();
@@ -225,11 +249,16 @@ namespace ADSBSharp {
         #endregion
         private void fpsTimer_Tick(object sender, EventArgs e) {
             float fps = (_frameCount) * 1000.0f / fpsTimer.Interval;
+            float nfps = (_newFrameCount) * 1000.0f / fpsTimer.Interval;
+
             _frameCount = 0;
+            _newFrameCount = 0;
 
             _avgFps = 0.9f * _avgFps + 0.1f * fps;
+            _newAvg = 0.9f * _newAvg + 0.1f * nfps;
 
             fpsLabel.Text = ((int)_avgFps).ToString();
+            label8.Text = ((int) _newAvg).ToString();
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e) {
