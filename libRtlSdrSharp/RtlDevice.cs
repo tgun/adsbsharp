@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Threading;
 
 namespace libRtlSdrSharp {
@@ -17,6 +18,8 @@ namespace libRtlSdrSharp {
     public sealed class RtlDevice : ISDRDevice, IDisposable {
         private const uint DefaultFrequency = 1090000000;
         private const int DefaultSampleRate = 2000000;
+        public const int ModesAsyncBufNumber = 16;
+
         private IntPtr _dev;
         public uint Index { get; }
         public string Name { get; }
@@ -132,7 +135,10 @@ namespace libRtlSdrSharp {
 
         #region Incoming Data management
         public object BufferLock { get; set; }
-        public MemoryStream Buffer { get; set; }
+        public List<short[]> SampleBuffer { get; set; }
+        public int SampleBufferDataIn { get; set; }
+        public int SampleBufferDataOut { get; set; }
+        public int SampleBufferDataReady { get; set; }
         private Thread _worker;
         public static readonly uint ReadLength = (16 * 16384);   /* 256k */
         #endregion
@@ -140,6 +146,13 @@ namespace libRtlSdrSharp {
         public RtlDevice(int index) {
             Index = (uint)index;
             BufferLock = new object();
+            SampleBufferDataReady = 0;
+            SampleBuffer = new List<short[]>(ModesAsyncBufNumber);
+
+            for (var i = 0; i < 16; i++) {
+                SampleBuffer.Add(new short[0]);
+            }
+
             int r = LibraryWrapper.rtlsdr_open(out _dev, Index);
             if (r != 0) {
                 throw new ApplicationException("Cannot open RTL device. Is the device locked somewhere?");
@@ -162,7 +175,7 @@ namespace libRtlSdrSharp {
 
             for (var i = 0; i < count; i++) {
                 string name = LibraryWrapper.rtlsdr_get_device_name((uint)i);
-                result.Add(i, name);
+                result.Add(i, i + "]" + name);
             }
 
             return result;
@@ -238,19 +251,31 @@ namespace libRtlSdrSharp {
         /// <param name="len">The length of the samples received</param>
         /// <param name="ctx">Pointer to the device giving us this data.</param>
         private void RtlSdrSamplesAvailable(IntPtr buf, uint len, IntPtr ctx) {
-            var actualBuffer = new byte[len];
-            Marshal.Copy(buf, actualBuffer, 0, (int)len); // -- Copy the data out of the native pointer based memory area into managed memory
+            var actualBuffer = new short[len];
+            // -- TODO: Might be not /2 ?
+            Marshal.Copy(buf, actualBuffer, 0, (int)(len/2)); // -- Copy the data out of the native pointer based memory area into managed memory
+            
+            if (ctx != IntPtr.Zero) {
+                GCHandle gcHandle = GCHandle.FromIntPtr(ctx);
+                if (!gcHandle.IsAllocated) {
+                    return;
+                }
 
-            GCHandle gcHandle = GCHandle.FromIntPtr(ctx);
-            if (!gcHandle.IsAllocated) {
-                return;
+                var instance = (RtlDevice) gcHandle.Target;
             }
-            var instance = (RtlDevice)gcHandle.Target;
 
             int sampleCount = (int)len / 2;
 
             lock (BufferLock) {
-                Buffer.Write(actualBuffer, 0, (int) len); // --  Write the incoming data to our memoryStream buffer.
+                SampleBufferDataIn &= (ModesAsyncBufNumber - 1);
+                SampleBuffer[SampleBufferDataIn] = actualBuffer;
+                SampleBufferDataIn = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn + 1);
+                SampleBufferDataReady = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn - SampleBufferDataOut);
+
+                if (SampleBufferDataIn == 0) {
+                    SampleBufferDataOut = (ModesAsyncBufNumber - 1) & (SampleBufferDataOut + 1);
+                    SampleBufferDataReady = (ModesAsyncBufNumber - 1);
+                }
             }
 
             DataAvailable?.Invoke(); // -- Let any consumers know that we have data available for consumption.

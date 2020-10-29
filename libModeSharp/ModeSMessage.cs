@@ -257,6 +257,9 @@ namespace libModeSharp {
             return result;
         }
         private static bool WasICAORecentlySeen(uint address) {
+            if (address == 0)
+                return false;
+
             uint hashAddress = ICAOCacheHashAddress(address);
             uint addr = ICAOCache[hashAddress * 2];
             uint time = ICAOCache[(hashAddress * 2) + 1];

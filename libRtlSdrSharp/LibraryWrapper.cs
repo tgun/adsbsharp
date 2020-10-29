@@ -33,7 +33,7 @@ namespace libRtlSdrSharp {
         }
 
         [DllImport(LibRtlSdr, EntryPoint = "rtlsdr_get_device_usb_strings", CallingConvention = CallingConvention.Cdecl)]
-        public static extern int rtlsdr_get_device_usb_strings(uint index, StringBuilder manufact, StringBuilder product, StringBuilder serial);
+        public static extern int rtlsdr_get_device_usb_strings(uint index, [In, Out] string manufact, [In, Out] string product, [In, Out] string serial);
 
         [DllImport(LibRtlSdr, EntryPoint = "rtlsdr_open", CallingConvention = CallingConvention.Cdecl)]
         public static extern int rtlsdr_open(out IntPtr dev, uint index);

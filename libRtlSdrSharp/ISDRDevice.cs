@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 
 namespace libRtlSdrSharp {
@@ -18,7 +19,10 @@ namespace libRtlSdrSharp {
         int TunerGain { get; set; }
         bool IsStreaming { get; }
         object BufferLock { get; set; }
-        MemoryStream Buffer { get; set; }
+         List<short[]> SampleBuffer { get; set; }
+         int SampleBufferDataIn { get; set; }
+         int SampleBufferDataOut { get; set; }
+         int SampleBufferDataReady { get; set; }
 
         void Start();
         void Stop();

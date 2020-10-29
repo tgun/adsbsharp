@@ -11,7 +11,7 @@ namespace ADSBSharp {
         private IFrameSink _frameSink;
         private int _selectedDeviceIndex = 0;
         private readonly AdsbBitDecoder _decoder = new AdsbBitDecoder();
-        private readonly AlternateDecoder _alternateDecoder;
+        private AlternateDecoder _alternateDecoder;
         private ISDRDevice _rtlDevice;
         private MessageDisplay _displayWindow;
         private bool _isDecoding;
@@ -109,7 +109,7 @@ namespace ADSBSharp {
         }
 
         private void _rtlDevice_DataAvailable() {
-            throw new NotImplementedException();
+            
         }
 
         private void tunerGainTrackBar_Scroll(object sender, EventArgs e) {
@@ -198,6 +198,8 @@ namespace ADSBSharp {
                 MessageBox.Show("Unable to start networking\n" + e.Message);
                 return;
             }
+            
+            _alternateDecoder = new AlternateDecoder(_rtlDevice);
 
             try {
                 _rtlDevice.Start();
