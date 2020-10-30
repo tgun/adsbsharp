@@ -212,6 +212,13 @@ namespace libRtlSdrSharp {
                 }
             }
 
+            LibraryWrapper.rtlsdr_set_freq_correction(_dev, 52);
+            if (_useRtlAgc) {
+                LibraryWrapper.rtlsdr_set_agc_mode(_dev, 1);
+            }
+
+            LibraryWrapper.rtlsdr_set_center_freq(_dev, DefaultFrequency);
+            LibraryWrapper.rtlsdr_set_sample_rate(_dev, SampleRate);
             r = LibraryWrapper.rtlsdr_reset_buffer(_dev);
             if (r != 0) {
                 throw new ApplicationException("Cannot access RTL device");
@@ -241,7 +248,7 @@ namespace libRtlSdrSharp {
         /// Initiate a read of samples from the RTL Dongle. The device will call our callback once the given read length is reached.
         /// </summary>
         private void StreamProc() {
-            LibraryWrapper.rtlsdr_read_async(_dev, RtlSdrSamplesAvailable, IntPtr.Zero, 0, ReadLength);
+            LibraryWrapper.rtlsdr_read_async(_dev, RtlSdrSamplesAvailable, IntPtr.Zero, 16, ReadLength);
         }
 
         /// <summary>
@@ -251,28 +258,19 @@ namespace libRtlSdrSharp {
         /// <param name="len">The length of the samples received</param>
         /// <param name="ctx">Pointer to the device giving us this data.</param>
         private void RtlSdrSamplesAvailable(IntPtr buf, uint len, IntPtr ctx) {
-            var actualBuffer = new short[len];
-            // -- TODO: Might be not /2 ?
+            if (len > ReadLength) len = ReadLength;
+
+            var actualBuffer = new short[len/2];
             Marshal.Copy(buf, actualBuffer, 0, (int)(len/2)); // -- Copy the data out of the native pointer based memory area into managed memory
-            
-            if (ctx != IntPtr.Zero) {
-                GCHandle gcHandle = GCHandle.FromIntPtr(ctx);
-                if (!gcHandle.IsAllocated) {
-                    return;
-                }
-
-                var instance = (RtlDevice) gcHandle.Target;
-            }
-
-            int sampleCount = (int)len / 2;
 
             lock (BufferLock) {
                 SampleBufferDataIn &= (ModesAsyncBufNumber - 1);
+
                 SampleBuffer[SampleBufferDataIn] = actualBuffer;
                 SampleBufferDataIn = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn + 1);
                 SampleBufferDataReady = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn - SampleBufferDataOut);
 
-                if (SampleBufferDataIn == 0) {
+                if (SampleBufferDataReady == 0) {
                     SampleBufferDataOut = (ModesAsyncBufNumber - 1) & (SampleBufferDataOut + 1);
                     SampleBufferDataReady = (ModesAsyncBufNumber - 1);
                 }

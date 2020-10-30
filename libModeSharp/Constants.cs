@@ -25,12 +25,14 @@ namespace libModeSharp {
 
         public const int ModesMessageEncoderErrors = 3;
         public const int ModesLongMessageBytes = 14; // -- 112 bits
+        public const int ModesLongMessageSamples = (ModesLongMessageBytes * 8) * 2; // -- bits *2
         public const int ModesShortMessageBytes = 7; // -- 56 bits
+        public const int ModesLongMessageSize = (ModesLongMessageSamples * 2);
         public const int ModesIcaoCacheLength = 1024; // -- Power of two required.
         public const int ModesPreambleUs = 8; // -- In Microseconds
         public const int ModesPreableSamples = (ModesPreambleUs * 2);
         public const int ModesPreableSize = (ModesPreableSamples * 2);
-        public const int ModesLongMessageSamples = (ModesLongMessageBytes * 8) * 2; // -- bits *2
+
 
         public const int ModesFullLength = (ModesPreambleUs + (ModesLongMessageBytes * 8)); // -- In bits
         public const int ModesAsyncBufferSize = (16 * 16384); // -- 256k

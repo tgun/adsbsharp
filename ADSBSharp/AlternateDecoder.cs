@@ -7,7 +7,7 @@ namespace ADSBSharp {
         private ISDRDevice _rtlDevice;
         public ushort[] Magnitude = new ushort[Constants.ModesAsyncBufferSize + Constants.ModesPreableSize + Constants.ModesLongMessageBytes]; // -- MODES_DATA_LEN + (MODES_FULL_LEN-1)*4;
         private ushort[] MagnitudeLookup = new ushort[2 * 256 * 256];
-
+        private byte[] otherMagnitudeLUT = new byte[129*129*2];
         public AlternateDecoder(ISDRDevice _deviceIo) {
             GenerateMagnitudeLookupTable();
             _rtlDevice = _deviceIo;
@@ -25,12 +25,18 @@ namespace ADSBSharp {
                     MagnitudeLookup[(i * 256) + q] = (ushort) ((mag < 65535) ? mag : 65535);
                 }
             }
+
+            for (var i = 0; i <= 128; i++) {
+                for (var q = 0; q <= 128; q++) {
+                    otherMagnitudeLUT[i * 129 + q] = (byte)Math.Round(Math.Sqrt(i * i + q * q) * 360);
+                }
+            }
         }
 
         public void DeviceOnRtlSdrDataAvailable() {
             lock (_rtlDevice.BufferLock) {
                 if (_rtlDevice.SampleBufferDataReady > 0) {
-                    _rtlDevice.SampleBufferDataOut &= (15);
+                   // _rtlDevice.SampleBufferDataOut &= (15);
                     ComputeMagnitudeVector(_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut]);
                     _rtlDevice.SampleBufferDataOut =
                         (RtlDevice.ModesAsyncBufNumber - 1) & (_rtlDevice.SampleBufferDataOut + 1);
@@ -46,18 +52,27 @@ namespace ADSBSharp {
             var result = new byte[input.Length * 2];
             var i = 0;
             foreach(var ip in input) {
-                Array.Copy(BitConverter.GetBytes(ip), 0, result, i * 2, 2);
+                int imag = (ip & 0xFF00) >> 8;
+                int real = ip & 0xFF;
+                imag = imag * 10 - 1275;
+                real = real * 10 - 1275;
+                //int mag = real * real + imag * imag;
+                result[i] = (byte)imag;
+                result[i + 1] = (byte)real;
+                i += 2;
+                //Array.Copy(BitConverter.GetBytes(ip), 0, result, i * 2, 2);
             }
+
             return result;
         }
 
         private void ComputeMagnitudeVector(short[] data) {
-            int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
-            int p = 0;
-            Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude,  0, (Constants.ModesPreableSamples * 2) + (Constants.ModesLongMessageSamples * 2));
-            for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
-                Magnitude[m++] = MagnitudeLookup[(ushort)data[p++]];
-            }
+            //int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
+            //int p = 0;
+            //Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude,  0, (Constants.ModesPreableSize) + (Constants.ModesLongMessageSize));
+            //for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
+            //    Magnitude[m++] = MagnitudeLookup[(ushort)data[p++]];
+            //}
 
             var derp = ConvertShortToByteArray(data);
 
@@ -70,9 +85,10 @@ namespace ADSBSharp {
 
                 if (i < 0) i = -i;
                 if (q < 0) q = -q;
-                mag2[i / 2] = MagnitudeLookup[i * 129 + q];
+                mag2[i / 2] = otherMagnitudeLUT[i * 129 + q];
             }
 
+            Magnitude = mag2;
             Console.WriteLine("hi mom");
         }
         public event FrameReceivedDelegate FrameReceived;

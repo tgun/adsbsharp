@@ -122,9 +122,11 @@ namespace ADSBSharp {
             }
 
             for (var i = 0; i < mySample.Length; i++) {
-                int derp = (mySample[i] & 0xFF00) >> 8;
-                int q = mySample[i] & 0xFF;
-                int mag = derp * derp + q * q;
+                int imag = (mySample[i] & 0xFF00) >> 8;
+                int real = mySample[i] & 0xFF;
+                imag = imag * 10 - 1275;
+                real = real * 10 - 1275;
+                int mag = real * real + imag * imag;
 
                 _decoder.ProcessSample(mag);
             }
