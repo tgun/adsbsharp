@@ -1,5 +1,0 @@
-D:\Documents\git\adsbsharp\libModeSharp\bin\Debug\libModeSharp.dll
-D:\Documents\git\adsbsharp\libModeSharp\bin\Debug\libModeSharp.pdb
-D:\Documents\git\adsbsharp\libModeSharp\obj\Debug\libModeSharp.csprojAssemblyReference.cache
-D:\Documents\git\adsbsharp\libModeSharp\obj\Debug\libModeSharp.dll
-D:\Documents\git\adsbsharp\libModeSharp\obj\Debug\libModeSharp.pdb

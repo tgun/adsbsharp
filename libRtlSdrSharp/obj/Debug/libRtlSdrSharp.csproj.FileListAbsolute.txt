@@ -1,5 +1,0 @@
-D:\Documents\git\adsbsharp\libRtlSdrSharp\obj\Debug\libRtlSdrSharp.csprojAssemblyReference.cache
-D:\Documents\git\adsbsharp\libRtlSdrSharp\bin\Debug\libRtlSdrSharp.dll
-D:\Documents\git\adsbsharp\libRtlSdrSharp\bin\Debug\libRtlSdrSharp.pdb
-D:\Documents\git\adsbsharp\libRtlSdrSharp\obj\Debug\libRtlSdrSharp.dll
-D:\Documents\git\adsbsharp\libRtlSdrSharp\obj\Debug\libRtlSdrSharp.pdb
