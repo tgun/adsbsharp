@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
+using System.Numerics;
 using System.Threading;
 
 namespace libRtlSdrSharp {
@@ -17,7 +17,7 @@ namespace libRtlSdrSharp {
     /// </summary>
     public sealed class RtlDevice : ISDRDevice, IDisposable {
         private const uint DefaultFrequency = 1090000000;
-        private const int DefaultSampleRate = 2000000;
+        private const int DefaultSampleRate = 1000000;
         public const int ModesAsyncBufNumber = 16;
 
         private IntPtr _dev;
@@ -135,7 +135,7 @@ namespace libRtlSdrSharp {
 
         #region Incoming Data management
         public object BufferLock { get; set; }
-        public List<short[]> SampleBuffer { get; set; }
+        public List<Complex[]> SampleBuffer { get; set; }
         public int SampleBufferDataIn { get; set; }
         public int SampleBufferDataOut { get; set; }
         public int SampleBufferDataReady { get; set; }
@@ -147,10 +147,10 @@ namespace libRtlSdrSharp {
             Index = (uint)index;
             BufferLock = new object();
             SampleBufferDataReady = 0;
-            SampleBuffer = new List<short[]>(ModesAsyncBufNumber);
+            SampleBuffer = new List<Complex[]>(ModesAsyncBufNumber);
 
             for (var i = 0; i < 16; i++) {
-                SampleBuffer.Add(new short[0]);
+                SampleBuffer.Add(new Complex[0]);
             }
 
             int r = LibraryWrapper.rtlsdr_open(out _dev, Index);
@@ -260,13 +260,17 @@ namespace libRtlSdrSharp {
         private void RtlSdrSamplesAvailable(IntPtr buf, uint len, IntPtr ctx) {
             if (len > ReadLength) len = ReadLength;
 
-            var actualBuffer = new short[len/2];
-            Marshal.Copy(buf, actualBuffer, 0, (int)(len/2)); // -- Copy the data out of the native pointer based memory area into managed memory
+            var actualBuffer = new byte[len];
+            Marshal.Copy(buf, actualBuffer, 0, (int)len); // -- Copy the data out of the native pointer based memory area into managed memory
 
             lock (BufferLock) {
+                var myList = new List<Complex>();
+                for (var i = 0; i < len/2; i++) {
+                    var myComplex = new Complex(actualBuffer[1], actualBuffer[0]);
+                    myList.Add(myComplex);
+                }
                 SampleBufferDataIn &= (ModesAsyncBufNumber - 1);
-
-                SampleBuffer[SampleBufferDataIn] = actualBuffer;
+                SampleBuffer[SampleBufferDataIn] = myList.ToArray();
                 SampleBufferDataIn = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn + 1);
                 SampleBufferDataReady = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn - SampleBufferDataOut);
 

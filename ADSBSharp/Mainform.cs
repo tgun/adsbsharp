@@ -5,6 +5,7 @@ using System.Threading;
 using System.Windows.Forms;
 using libRtlSdrSharp;
 using System.Linq;
+using System.Numerics;
 
 namespace ADSBSharp {
     public unsafe partial class MainForm : Form {
@@ -111,22 +112,20 @@ namespace ADSBSharp {
         }
 
         private void _rtlDevice_DataAvailable() {
-            short[] mySample = new short[0];
+            var mySample = new Complex[0];
 
             lock (_rtlDevice.BufferLock) {
                 if (_rtlDevice.SampleBufferDataReady > 0) {
                     _rtlDevice.SampleBufferDataOut &= (15);
-                    mySample = new short[_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut].Length];
+                    mySample = new Complex[_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut].Length];
                     Array.Copy(_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut], mySample, mySample.Length);
                 }
             }
 
             for (var i = 0; i < mySample.Length; i++) {
-                int imag = (mySample[i] & 0xFF00) >> 8;
-                int real = mySample[i] & 0xFF;
-                imag = imag * 10 - 1275;
-                real = real * 10 - 1275;
-                int mag = real * real + imag * imag;
+                var imag = mySample[i].Imaginary * 10 - 1275;
+                var real = mySample[i].Real * 10 - 1275;
+                int mag = (int)(real * real + imag * imag);
 
                 _decoder.ProcessSample(mag);
             }

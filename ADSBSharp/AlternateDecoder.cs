@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Numerics;
 using libModeSharp;
 using libRtlSdrSharp;
 
@@ -48,48 +49,31 @@ namespace ADSBSharp {
             DetectModeS(Magnitude, Constants.ModesAsyncBufferSamples);
         }
 
-        private byte[] ConvertShortToByteArray(short[] input) {
-            var result = new byte[input.Length * 2];
-            var i = 0;
-            foreach(var ip in input) {
-                int imag = (ip & 0xFF00) >> 8;
-                int real = ip & 0xFF;
-                imag = imag * 10 - 1275;
-                real = real * 10 - 1275;
-                //int mag = real * real + imag * imag;
-                result[i] = (byte)imag;
-                result[i + 1] = (byte)real;
-                i += 2;
-                //Array.Copy(BitConverter.GetBytes(ip), 0, result, i * 2, 2);
+
+        private void ComputeMagnitudeVector(Complex[] data) {
+            int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
+            int p = 0;
+            Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude, 0, (Constants.ModesPreableSize) + (Constants.ModesLongMessageSize));
+            for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
+                Magnitude[m++] = MagnitudeLookup[(ushort)data[p++].Magnitude];
             }
 
-            return result;
-        }
+            //var mag2 = new ushort[Magnitude.Length];
+            //Array.Copy(Magnitude, mag2, Magnitude.Length);
 
-        private void ComputeMagnitudeVector(short[] data) {
-            //int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
-            //int p = 0;
-            //Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude,  0, (Constants.ModesPreableSize) + (Constants.ModesLongMessageSize));
-            //for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
-            //    Magnitude[m++] = MagnitudeLookup[(ushort)data[p++]];
+            //for (var j = 0; j < data.Length; j++)
+            //{
+            //    var i = data[j].Imaginary;
+            //    var q = data[j].Real;
+
+            //    if (i < 0) i = -i;
+            //    if (q < 0) q = -q;
+
+            //    mag2[i / 2] = otherMagnitudeLUT[i * 129 + q];
             //}
 
-            var derp = ConvertShortToByteArray(data);
-
-            var mag2 = new ushort[Magnitude.Length];
-            Array.Copy(Magnitude, mag2, Magnitude.Length);
-
-            for (var j = 0; j < derp.Length; j += 2) {
-                int i = derp[j] - 127;
-                int q = derp[j + 1] - 127;
-
-                if (i < 0) i = -i;
-                if (q < 0) q = -q;
-                mag2[i / 2] = otherMagnitudeLUT[i * 129 + q];
-            }
-
-            Magnitude = mag2;
-            Console.WriteLine("hi mom");
+            //Magnitude = mag2;
+            // Console.WriteLine("hi mom");
         }
         public event FrameReceivedDelegate FrameReceived;
         private void DetectModeS(ushort[] data, int magLen) {
@@ -114,7 +98,7 @@ namespace ADSBSharp {
                     data[j + 9] > data[j + 6]
                        )) 
                     {
-                    continue; // -- this relation of samples is not correct.
+                        continue; // -- this relation of samples is not correct.
                 }
 
                 // The samples between the two spikes must be < than the average

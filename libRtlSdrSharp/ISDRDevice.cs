@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
+using System.Numerics;
 
 namespace libRtlSdrSharp {
     public interface ISDRDevice : IDisposable {
@@ -19,7 +19,7 @@ namespace libRtlSdrSharp {
         int TunerGain { get; set; }
         bool IsStreaming { get; }
         object BufferLock { get; set; }
-         List<short[]> SampleBuffer { get; set; }
+         List<Complex[]> SampleBuffer { get; set; }
          int SampleBufferDataIn { get; set; }
          int SampleBufferDataOut { get; set; }
          int SampleBufferDataReady { get; set; }
