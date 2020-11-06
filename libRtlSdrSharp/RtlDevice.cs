@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Numerics;
 using System.Threading;
+using BetterSDR.Common;
 
 namespace libRtlSdrSharp {
     public enum SamplingMode {
@@ -134,24 +135,14 @@ namespace libRtlSdrSharp {
         #endregion
 
         #region Incoming Data management
-        public object BufferLock { get; set; }
-        public List<Complex[]> SampleBuffer { get; set; }
-        public int SampleBufferDataIn { get; set; }
-        public int SampleBufferDataOut { get; set; }
-        public int SampleBufferDataReady { get; set; }
+        public ComplexBuffer Buffer { get; set; }
         private Thread _worker;
         public static readonly uint ReadLength = (16 * 16384);   /* 256k */
         #endregion
 
         public RtlDevice(int index) {
             Index = (uint)index;
-            BufferLock = new object();
-            SampleBufferDataReady = 0;
-            SampleBuffer = new List<Complex[]>(ModesAsyncBufNumber);
-
-            for (var i = 0; i < 16; i++) {
-                SampleBuffer.Add(new Complex[0]);
-            }
+            Buffer = new ComplexBuffer();
 
             int r = LibraryWrapper.rtlsdr_open(out _dev, Index);
             if (r != 0) {
@@ -263,22 +254,14 @@ namespace libRtlSdrSharp {
             var actualBuffer = new byte[len];
             Marshal.Copy(buf, actualBuffer, 0, (int)len); // -- Copy the data out of the native pointer based memory area into managed memory
 
-            lock (BufferLock) {
-                var myList = new List<Complex>();
-                for (var i = 0; i < len/2; i++) {
-                    var myComplex = new Complex(actualBuffer[1], actualBuffer[0]);
-                    myList.Add(myComplex);
-                }
-                SampleBufferDataIn &= (ModesAsyncBufNumber - 1);
-                SampleBuffer[SampleBufferDataIn] = myList.ToArray();
-                SampleBufferDataIn = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn + 1);
-                SampleBufferDataReady = (ModesAsyncBufNumber - 1) & (SampleBufferDataIn - SampleBufferDataOut);
-
-                if (SampleBufferDataReady == 0) {
-                    SampleBufferDataOut = (ModesAsyncBufNumber - 1) & (SampleBufferDataOut + 1);
-                    SampleBufferDataReady = (ModesAsyncBufNumber - 1);
-                }
+            var myList = new Complex[len / 2];
+            
+            for (var i = 0; i < len/2; i++) {
+                var myComplex = new Complex(actualBuffer[1], actualBuffer[0]);
+                myList[i] = (myComplex);
             }
+
+            Buffer.Add(myList);
 
             DataAvailable?.Invoke(); // -- Let any consumers know that we have data available for consumption.
         }

@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{0DE99142-09C0-4841-A6D7-0C8356D6A5B5}</ProjectGuid>
+    <ProjectGuid>{DA2DBD42-2D84-4591-964A-3B8F8626415B}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>libRtlSdrSharp</RootNamespace>
-    <AssemblyName>libRtlSdrSharp</AssemblyName>
+    <RootNamespace>BetterSDR.Common</RootNamespace>
+    <AssemblyName>BetterSDR.Common</AssemblyName>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
@@ -21,7 +21,6 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -43,16 +42,10 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ISDRDevice.cs" />
-    <Compile Include="LibraryWrapper.cs" />
+    <Compile Include="ComplexBuffer.cs" />
+    <Compile Include="Extensions.cs" />
+    <Compile Include="Fourier.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RtlDevice.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\BetterSDR.Common\BetterSDR.Common.csproj">
-      <Project>{da2dbd42-2d84-4591-964a-3b8f8626415b}</Project>
-      <Name>BetterSDR.Common</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
