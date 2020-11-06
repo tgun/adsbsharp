@@ -11,9 +11,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libModeSharp", "libModeShar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libAdsbTest", "libAdsbTest\libAdsbTest.csproj", "{DC3C9271-AD2B-4076-BE43-9445F324C0F3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FmDisplay", "FmDisplay\FmDisplay.csproj", "{E1604A9C-AB2C-4D95-BF59-767FF8D6B3D4}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetterSDR", "FmDisplay\BetterSDR.csproj", "{E1604A9C-AB2C-4D95-BF59-767FF8D6B3D4}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetterSDR.Controls", "BetterSDR.Controls\BetterSDR.Controls.csproj", "{E358907F-452C-4657-BD26-0E38954E214E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetterSDR.Common", "BetterSDR.Common\BetterSDR.Common.csproj", "{DA2DBD42-2D84-4591-964A-3B8F8626415B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -120,6 +122,22 @@ Global
 		{E358907F-452C-4657-BD26-0E38954E214E}.Release|x64.Build.0 = Release|Any CPU
 		{E358907F-452C-4657-BD26-0E38954E214E}.Release|x86.ActiveCfg = Release|Any CPU
 		{E358907F-452C-4657-BD26-0E38954E214E}.Release|x86.Build.0 = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|x64.Build.0 = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Debug|x86.Build.0 = Debug|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|x64.ActiveCfg = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|x64.Build.0 = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|x86.ActiveCfg = Release|Any CPU
+		{DA2DBD42-2D84-4591-964A-3B8F8626415B}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

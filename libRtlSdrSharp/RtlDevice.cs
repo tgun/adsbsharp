@@ -17,7 +17,7 @@ namespace libRtlSdrSharp {
     /// </summary>
     public sealed class RtlDevice : ISDRDevice, IDisposable {
         private const uint DefaultFrequency = 1090000000;
-        private const int DefaultSampleRate = 1000000;
+        private const int DefaultSampleRate = 2000000;
         public const int ModesAsyncBufNumber = 16;
 
         private IntPtr _dev;
@@ -155,7 +155,7 @@ namespace libRtlSdrSharp {
 
             int r = LibraryWrapper.rtlsdr_open(out _dev, Index);
             if (r != 0) {
-                throw new ApplicationException("Cannot open RTL device. Is the device locked somewhere?");
+              //  throw new ApplicationException("Cannot open RTL device. Is the device locked somewhere?");
             }
             int count = _dev == IntPtr.Zero ? 0 : LibraryWrapper.rtlsdr_get_tuner_gains(_dev, null);
             if (count < 0) {

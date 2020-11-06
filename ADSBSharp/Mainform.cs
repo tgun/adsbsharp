@@ -127,7 +127,7 @@ namespace ADSBSharp {
                 var real = mySample[i].Real * 10 - 1275;
                 int mag = (int)(real * real + imag * imag);
 
-                _decoder.ProcessSample(mag);
+                _decoder.ProcessSample((int)mySample[i].Magnitude);
             }
 
             _alternateDecoder.DeviceOnRtlSdrDataAvailable();

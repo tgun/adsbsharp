@@ -51,28 +51,27 @@ namespace ADSBSharp {
 
 
         private void ComputeMagnitudeVector(Complex[] data) {
-            int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
-            int p = 0;
-            Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude, 0, (Constants.ModesPreableSize) + (Constants.ModesLongMessageSize));
-            for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
-                Magnitude[m++] = MagnitudeLookup[(ushort)data[p++].Magnitude];
-            }
-
-            //var mag2 = new ushort[Magnitude.Length];
-            //Array.Copy(Magnitude, mag2, Magnitude.Length);
-
-            //for (var j = 0; j < data.Length; j++)
-            //{
-            //    var i = data[j].Imaginary;
-            //    var q = data[j].Real;
-
-            //    if (i < 0) i = -i;
-            //    if (q < 0) q = -q;
-
-            //    mag2[i / 2] = otherMagnitudeLUT[i * 129 + q];
+            //int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
+            //int p = 0;
+            //Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude, 0, (Constants.ModesPreableSize) + (Constants.ModesLongMessageSize));
+            //for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
+            //    Magnitude[m++] = MagnitudeLookup[(ushort)data[p++].Magnitude];
             //}
 
-            //Magnitude = mag2;
+            var mag2 = new ushort[Magnitude.Length];
+            Array.Copy(Magnitude, mag2, Magnitude.Length);
+
+            for (var j = 0; j < data.Length; j++) {
+                var i = (int)data[j].Imaginary;
+                var q = (int)data[j].Real;
+
+                if (i < 0) i = -i;
+                if (q < 0) q = -q;
+
+                mag2[i / 2] = otherMagnitudeLUT[i * 129 + q];
+            }
+
+            Magnitude = mag2;
             // Console.WriteLine("hi mom");
         }
         public event FrameReceivedDelegate FrameReceived;
