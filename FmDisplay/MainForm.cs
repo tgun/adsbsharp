@@ -1,18 +1,18 @@
-﻿using libRtlSdrSharp;
-using BetterSDR.Common;
+﻿using BetterSDR.Common;
 using System;
 using System.Drawing;
 using System.Windows.Forms;
-using System.Numerics;
-using MathNet.Numerics;
+using libRtlSdrSharp;
+using Complex = System.Numerics.Complex;
 using Fourier = BetterSDR.Common.Fourier;
 
 namespace BetterSDR {
     public partial class MainForm : Form {
         private RtlDevice _rtlDevice;
-        double[] iFft;
+
         double[] qFft;
         Complex[] rawPcm;
+        private readonly object pcmLock = new object();
         public MainForm() {
             InitializeComponent();
             timer1.Interval = 1;
@@ -20,11 +20,10 @@ namespace BetterSDR {
         }
 
         private void initializePlot() {
-            
-            if (iFft != null) {
+            if (qFft != null) {
                 iPlot.plt.Clear();
 
-                double fftSpacing = (double)_rtlDevice.SampleRate / iFft.Length;
+                double fftSpacing = (double)_rtlDevice.SampleRate / qFft.Length;
                 // -- plot for I branc
                 iPlot.plt.Clear();
                 var signal = iPlot.plt.PlotSignal(qFft, sampleRate: fftSpacing, markerSize: 0);
@@ -43,34 +42,29 @@ namespace BetterSDR {
             var myDevice = new RtlDevice(1);
 
             _rtlDevice = myDevice;
+            _rtlDevice.SampleRate = (uint)(2.048 * 1000000.0);
+            _rtlDevice.UseOffsetTuning = false;
+            _rtlDevice.SamplingMode = 0;
+            _rtlDevice.FrequencyCorrection = 0;
+            _rtlDevice.UseRtlAGC = true;
+            _rtlDevice.UseTunerAGC = false;
+            _rtlDevice.TunerGain = 496;
             // 1.090.000.000
             // 0.100.300.000
             myDevice.Frequency = 0096100000;
-            myDevice.UseRtlAGC = false;
 
-            myDevice.DataAvailable += MyDevice_DataAvailable;
             myDevice.Start();
-            trackBar1.Maximum = 50;
-            trackBar1.Minimum = 0;
-            trackBar1.Value = myDevice.TunerGain;
         }
 
         private void MyDevice_DataAvailable() {
-            var mySample = new Complex[0];
+            var readLength = (int)(_rtlDevice.SampleRate / 2);
 
-            lock (_rtlDevice.BufferLock) {
-                if (_rtlDevice.SampleBufferDataReady > 0) {
-                    _rtlDevice.SampleBufferDataOut &= (15);
-                    mySample = new Complex[_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut].Length];
-                    Array.Copy(_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut], mySample, mySample.Length);
-                }
-            }
+            if (readLength > _rtlDevice.Buffer.Length)
+                readLength = _rtlDevice.Buffer.Length;
 
-            if (rawPcm == null)
-                rawPcm = new Complex[mySample.Length];
-
-            lock (rawPcm) {
-                Array.Copy(mySample, rawPcm, mySample.Length);
+            Complex[] mySample = _rtlDevice.Buffer.Read(readLength);
+            lock (pcmLock) {
+                rawPcm = mySample;
             }
         }
 
@@ -80,31 +74,38 @@ namespace BetterSDR {
 
             // the PCM size to be analyzed with FFT must be a power of 2
             var myCopy = new Complex[0];
-            lock (rawPcm)
+            lock (pcmLock)
             {
-                var blackWindow = Window.Blackman((int) (rawPcm.Length));
+           //     var blackWindow = Window.Blackman((int) (rawPcm.Length));
                 myCopy = new Complex[rawPcm.Length];
 
-                for (var i = 0; i < rawPcm.Length; i++)
-                {
-                    var newReal = rawPcm[i].Real * blackWindow[i];
-                    newReal = newReal * 10 - 1275;
-                    var newImag = rawPcm[i].Imaginary * blackWindow[i];
-                    newImag = newImag * 10 - 1275;
+                for (var i = 0; i < rawPcm.Length; i++) {
+                    var newReal = rawPcm[i].Real;// * blackWindow[i];
+
+                    var newImag = rawPcm[i].Imaginary;// * blackWindow[i];
+                    if (checkBox1.Checked) {
+                        newReal = newReal * 10 - 1275;
+                        newImag = newImag * 10 - 1275;
+                    }
+
                     myCopy[i] = new Complex(newReal, newImag);
                 }
             }
 
             // http://www.designnews.com/author.asp?section_id=1419&doc_id=236273&piddl_msgid=522392
             var fftGain = (float)(10.0 * Math.Log10((double)myCopy.Length / 2));
-            var compensation = 24.0f - fftGain + -120.0f;
+            var derp = -120.0f;
+            
+            if (checkBox2.Checked)
+                derp = -240.0f;
+            
+            if (checkBox3.Checked)
+                derp = -60.0f;
+
+            var compensation = 24.0f - fftGain + derp;
 
             Fourier.ForwardTransform(myCopy, myCopy.Length);
-            
 
-            if (iFft == null)
-                iFft = new double[myCopy.Length];
-            
             if (qFft == null)
                 qFft = new double[myCopy.Length];
 
@@ -125,7 +126,7 @@ namespace BetterSDR {
         }
 
         private void timer1_Tick(object sender, EventArgs e) {
-            if (_rtlDevice == null || !_rtlDevice.IsStreaming)
+            if (_rtlDevice == null)
                 return;
 
             updateFFT();
@@ -138,6 +139,8 @@ namespace BetterSDR {
 
         private void trackBar1_Scroll(object sender, EventArgs e) {
             if (_rtlDevice != null && _rtlDevice.IsStreaming) {
+                _rtlDevice.UseRtlAGC = false;
+                _rtlDevice.UseTunerAGC = false;
                 _rtlDevice.TunerGain = trackBar1.Value;
             }
         }

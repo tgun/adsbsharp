@@ -5,7 +5,7 @@ using System.Text;
 namespace libRtlSdrSharp {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void RtlSdrReadAsyncDelegate(IntPtr buf, uint len, IntPtr ctx);
-
+    
     public enum RtlSdrTunerType { 
         Unknown = 0,
         E4000,

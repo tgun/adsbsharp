@@ -12,7 +12,6 @@ namespace ADSBSharp {
         public AlternateDecoder(ISDRDevice _deviceIo) {
             GenerateMagnitudeLookupTable();
             _rtlDevice = _deviceIo;
-            //_rtlDevice.DataAvailable += DeviceOnRtlSdrDataAvailable;
             ModeSMessage.Init();
         }
 
@@ -34,29 +33,24 @@ namespace ADSBSharp {
             }
         }
 
-        public void DeviceOnRtlSdrDataAvailable() {
-            lock (_rtlDevice.BufferLock) {
-                if (_rtlDevice.SampleBufferDataReady > 0) {
-                   // _rtlDevice.SampleBufferDataOut &= (15);
-                    ComputeMagnitudeVector(_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut]);
-                    _rtlDevice.SampleBufferDataOut =
-                        (RtlDevice.ModesAsyncBufNumber - 1) & (_rtlDevice.SampleBufferDataOut + 1);
-                    _rtlDevice.SampleBufferDataReady = (RtlDevice.ModesAsyncBufNumber - 1) &
-                                                       (_rtlDevice.SampleBufferDataIn - _rtlDevice.SampleBufferDataOut);
-                }
-            }
+        public void DeviceOnRtlSdrDataAvailable(Complex[] samples) {
+            //var len = _rtlDevice.SampleRate / 2;
+            //if (_rtlDevice.Buffer.Length != len)
+            //    len = _rtlDevice.Buffer.Length;
 
+            //var samples = _rtlDevice.Buffer.Read(len);
+            ComputeMagnitudeVector(samples);
             DetectModeS(Magnitude, Constants.ModesAsyncBufferSamples);
         }
 
 
         private void ComputeMagnitudeVector(Complex[] data) {
-            //int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
-            //int p = 0;
-            //Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude, 0, (Constants.ModesPreableSize) + (Constants.ModesLongMessageSize));
-            //for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
-            //    Magnitude[m++] = MagnitudeLookup[(ushort)data[p++].Magnitude];
-            //}
+            int m = Constants.ModesPreableSamples + Constants.ModesLongMessageSamples;
+            int p = 0;
+            Buffer.BlockCopy(Magnitude, Constants.ModesAsyncBufferSamples, Magnitude, 0, (Constants.ModesPreableSize) + (Constants.ModesLongMessageSize));
+            for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
+                Magnitude[m++] = MagnitudeLookup[(ushort)data[p++].Magnitude];
+            }
 
             var mag2 = new ushort[Magnitude.Length];
             Array.Copy(Magnitude, mag2, Magnitude.Length);

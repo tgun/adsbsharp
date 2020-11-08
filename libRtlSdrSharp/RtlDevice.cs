@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Numerics;
 using System.Threading;
@@ -140,13 +139,23 @@ namespace libRtlSdrSharp {
         public static readonly uint ReadLength = (16 * 16384);   /* 256k */
         #endregion
 
+        private static float[] _lookUpTable;
+
+        static RtlDevice() {
+            _lookUpTable = new float[256];
+            const float scale = 1.0f / 127.0f;
+
+            for (var i = 0; i < 256; i++) {
+                _lookUpTable[i] = (i - 128) * scale;
+            }
+        }
         public RtlDevice(int index) {
             Index = (uint)index;
             Buffer = new ComplexBuffer();
 
             int r = LibraryWrapper.rtlsdr_open(out _dev, Index);
             if (r != 0) {
-              //  throw new ApplicationException("Cannot open RTL device. Is the device locked somewhere?");
+                throw new ApplicationException("Cannot open RTL device. Is the device locked somewhere?");
             }
             int count = _dev == IntPtr.Zero ? 0 : LibraryWrapper.rtlsdr_get_tuner_gains(_dev, null);
             if (count < 0) {
@@ -239,7 +248,7 @@ namespace libRtlSdrSharp {
         /// Initiate a read of samples from the RTL Dongle. The device will call our callback once the given read length is reached.
         /// </summary>
         private void StreamProc() {
-            LibraryWrapper.rtlsdr_read_async(_dev, RtlSdrSamplesAvailable, IntPtr.Zero, 16, ReadLength);
+            LibraryWrapper.rtlsdr_read_async(_dev, RtlSdrSamplesAvailable, IntPtr.Zero, 0, ReadLength);
         }
 
         /// <summary>
@@ -252,13 +261,17 @@ namespace libRtlSdrSharp {
             if (len > ReadLength) len = ReadLength;
 
             var actualBuffer = new byte[len];
-            Marshal.Copy(buf, actualBuffer, 0, (int)len); // -- Copy the data out of the native pointer based memory area into managed memory
+            Marshal.Copy(buf, actualBuffer, 0, (int)len);
 
             var myList = new Complex[len / 2];
-            
-            for (var i = 0; i < len/2; i++) {
-                var myComplex = new Complex(actualBuffer[1], actualBuffer[0]);
-                myList[i] = (myComplex);
+            var j = 0;
+
+            for (var i = 0; i < len; i+=2) {
+                var real = actualBuffer[i];//_lookUpTable[actualBuffer[i]];
+                var imag = actualBuffer[i + 1];//_lookUpTable[actualBuffer[i+1]];
+
+                var myComplex = new Complex(real, imag);
+                myList[j++] = (myComplex);
             }
 
             Buffer.Add(myList);

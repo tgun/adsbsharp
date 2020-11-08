@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Numerics;
+using BetterSDR.Common;
 
 namespace libRtlSdrSharp {
     public interface ISDRDevice : IDisposable {
@@ -18,11 +19,7 @@ namespace libRtlSdrSharp {
         bool BiasTee { get; set; }
         int TunerGain { get; set; }
         bool IsStreaming { get; }
-        object BufferLock { get; set; }
-         List<Complex[]> SampleBuffer { get; set; }
-         int SampleBufferDataIn { get; set; }
-         int SampleBufferDataOut { get; set; }
-         int SampleBufferDataReady { get; set; }
+        ComplexBuffer Buffer { get; set; }
 
         void Start();
         void Stop();

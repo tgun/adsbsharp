@@ -112,25 +112,23 @@ namespace ADSBSharp {
         }
 
         private void _rtlDevice_DataAvailable() {
-            var mySample = new Complex[0];
+            var readLength = (int)(_rtlDevice.SampleRate / 2);
 
-            lock (_rtlDevice.BufferLock) {
-                if (_rtlDevice.SampleBufferDataReady > 0) {
-                    _rtlDevice.SampleBufferDataOut &= (15);
-                    mySample = new Complex[_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut].Length];
-                    Array.Copy(_rtlDevice.SampleBuffer[_rtlDevice.SampleBufferDataOut], mySample, mySample.Length);
-                }
-            }
+            if (readLength > _rtlDevice.Buffer.Length)
+                readLength = _rtlDevice.Buffer.Length;
 
-            for (var i = 0; i < mySample.Length; i++) {
-                var imag = mySample[i].Imaginary * 10 - 1275;
-                var real = mySample[i].Real * 10 - 1275;
+            var samples = _rtlDevice.Buffer.Read(readLength);
+
+
+            for (var i = 0; i < samples.Length; i++) {
+                var imag = samples[i].Imaginary * 10 - 1275;
+                var real = samples[i].Real * 10 - 1275;
                 int mag = (int)(real * real + imag * imag);
 
-                _decoder.ProcessSample((int)mySample[i].Magnitude);
+                _decoder.ProcessSample(mag);
             }
 
-            _alternateDecoder.DeviceOnRtlSdrDataAvailable();
+            _alternateDecoder.DeviceOnRtlSdrDataAvailable(samples);
         }
 
         private void tunerGainTrackBar_Scroll(object sender, EventArgs e) {

@@ -109,6 +109,10 @@
     <Content Include="radar.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\BetterSDR.Common\BetterSDR.Common.csproj">
+      <Project>{DA2DBD42-2D84-4591-964A-3B8F8626415B}</Project>
+      <Name>BetterSDR.Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\libModeSharp\libModeSharp.csproj">
       <Project>{c683f370-e4f1-440f-b830-90a2ce5bafed}</Project>
       <Name>libModeSharp</Name>
