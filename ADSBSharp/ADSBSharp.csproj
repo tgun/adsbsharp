@@ -23,7 +23,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
     <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
@@ -117,9 +117,9 @@
       <Project>{c683f370-e4f1-440f-b830-90a2ce5bafed}</Project>
       <Name>libModeSharp</Name>
     </ProjectReference>
-    <ProjectReference Include="..\libRtlSdrSharp\libRtlSdrSharp.csproj">
+    <ProjectReference Include="..\libRtlSdrSharp\BetterSDR.RTLSDR.csproj">
       <Project>{0de99142-09c0-4841-a6d7-0c8356d6a5b5}</Project>
-      <Name>libRtlSdrSharp</Name>
+      <Name>BetterSDR.RTLSDR</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

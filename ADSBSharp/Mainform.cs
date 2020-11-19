@@ -3,17 +3,17 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Threading;
 using System.Windows.Forms;
-using libRtlSdrSharp;
 using System.Linq;
 using System.Numerics;
+using BetterSDR.RTLSDR;
 
 namespace ADSBSharp {
-    public unsafe partial class MainForm : Form {
+    public partial class MainForm : Form {
         private IFrameSink _frameSink;
-        private int _selectedDeviceIndex = 0;
+        private int _selectedDeviceIndex;
         private readonly AdsbBitDecoder _decoder = new AdsbBitDecoder();
         private AlternateDecoder _alternateDecoder;
-        private ISDRDevice _rtlDevice;
+        private RtlDevice _rtlDevice;
         private MessageDisplay _displayWindow;
         private bool _isDecoding;
         private bool _initialized;
@@ -67,9 +67,8 @@ namespace ADSBSharp {
         }
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e) {
-            if (_isDecoding) {
+            if (_isDecoding) 
                 StopDecoding();
-            }
         }
 
         private int GetCurrentlySelectedItemIndex() {
@@ -117,13 +116,12 @@ namespace ADSBSharp {
             if (readLength > _rtlDevice.Buffer.Length)
                 readLength = _rtlDevice.Buffer.Length;
 
-            var samples = _rtlDevice.Buffer.Read(readLength);
+            Complex[] samples = _rtlDevice.Buffer.Read(readLength);
 
-
-            for (var i = 0; i < samples.Length; i++) {
-                var imag = samples[i].Imaginary * 10 - 1275;
-                var real = samples[i].Real * 10 - 1275;
-                int mag = (int)(real * real + imag * imag);
+            foreach (Complex sample in samples) {
+                double imaginary = sample.Imaginary * 10 - 1275;
+                double real = sample.Real * 10 - 1275;
+                var mag = (int)(real * real + imaginary * imaginary);
 
                 _decoder.ProcessSample(mag);
             }
@@ -135,34 +133,35 @@ namespace ADSBSharp {
             if (!_initialized) {
                 return;
             }
-            var gain = _rtlDevice.SupportedGains[tunerGainTrackBar.Value];
+
+            int gain = _rtlDevice.SupportedGains[tunerGainTrackBar.Value];
             _rtlDevice.TunerGain = gain;
             gainLabel.Text = gain / 10.0 + " dB";
         }
 
         private void tunerAgcCheckBox_CheckedChanged(object sender, EventArgs e) {
-            if (!_initialized) {
+            if (!_initialized)
                 return;
-            }
+
             tunerGainTrackBar.Enabled = tunerAgcCheckBox.Enabled && !tunerAgcCheckBox.Checked;
             _rtlDevice.UseTunerAGC = tunerAgcCheckBox.Checked;
             gainLabel.Visible = tunerAgcCheckBox.Enabled && !tunerAgcCheckBox.Checked;
-            if (!tunerAgcCheckBox.Checked) {
+            
+            if (!tunerAgcCheckBox.Checked) 
                 tunerGainTrackBar_Scroll(null, null);
-            }
         }
 
         private void frequencyCorrectionNumericUpDown_ValueChanged(object sender, EventArgs e) {
-            if (!_initialized) {
+            if (!_initialized)
                 return;
-            }
+
             _rtlDevice.FrequencyCorrection = (int)frequencyCorrectionNumericUpDown.Value;
         }
 
         private void rtlAgcCheckBox_CheckedChanged(object sender, EventArgs e) {
-            if (!_initialized) {
+            if (!_initialized)
                 return;
-            }
+
             _rtlDevice.UseRtlAGC = rtlAgcCheckBox.Checked;
         }
 
@@ -182,7 +181,7 @@ namespace ADSBSharp {
             tunerGainTrackBar.Value = tunerGainTrackBar.Maximum;
 
             for (var i = 0; i < deviceComboBox.Items.Count; i++) {
-                var deviceIndex = _rtlDevices.FirstOrDefault((a) => a.Value == (string)deviceComboBox.Items[i]).Key;
+                int deviceIndex = _rtlDevices.FirstOrDefault((a) => a.Value == (string)deviceComboBox.Items[i]).Key;
                 
                 if (deviceIndex != _rtlDevice.Index) 
                     continue;
@@ -196,19 +195,16 @@ namespace ADSBSharp {
             frequencyCorrectionNumericUpDown_ValueChanged(null, null);
             rtlAgcCheckBox_CheckedChanged(null, null);
             tunerAgcCheckBox_CheckedChanged(null, null);
-            if (!tunerAgcCheckBox.Checked) {
-                tunerGainTrackBar_Scroll(null, null);
-            }
+
+            if (!tunerAgcCheckBox.Checked) tunerGainTrackBar_Scroll(null, null);
         }
 
         private void StartDecoding() {
             try {
-                if (shareCb.Checked) {
+                if (shareCb.Checked)
                     _frameSink = new AdsbHubClient();
-                }
-                else {
+                else
                     _frameSink = new SimpleTcpServer();
-                }
 
                 _frameSink.Start(hostnameTb.Text, (int)portNumericUpDown.Value);
             }
@@ -285,9 +281,8 @@ namespace ADSBSharp {
         }
 
         private void biasTeeCheckbox_CheckedChanged(object sender, EventArgs e) {
-            if (!_initialized) {
+            if (!_initialized)
                 return;
-            }
 
             _rtlDevice.BiasTee = biasTeeCheckbox.Checked;
         }

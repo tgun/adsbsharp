@@ -1,11 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using BetterSDR.Common;
 
-namespace libRtlSdrSharp {
+namespace BetterSDR.RTLSDR {
     public enum SamplingMode {
         Quadrature = 0,
         DirectSamplingI,
@@ -15,10 +15,9 @@ namespace libRtlSdrSharp {
     /// <summary>
     /// C# Wrapper for a friendly interface with an RTL-SDR Dongle
     /// </summary>
-    public sealed class RtlDevice : ISDRDevice, IDisposable {
+    public sealed class RtlDevice : IDisposable {
         private const uint DefaultFrequency = 1090000000;
         private const int DefaultSampleRate = 2000000;
-        public const int ModesAsyncBufNumber = 16;
 
         private IntPtr _dev;
         public uint Index { get; }
@@ -29,20 +28,19 @@ namespace libRtlSdrSharp {
             get => _useTunerAgc;
             set {
                 _useTunerAgc = value;
-                if (_dev != IntPtr.Zero) {
+                
+                if (_dev != IntPtr.Zero) 
                     LibraryWrapper.rtlsdr_set_tuner_gain_mode(_dev, _useTunerAgc ? 0 : 1);
-                }
             }
         }
 
-        private bool _useRtlAgc;
+        private bool _useRtlAgc; 
         public bool UseRtlAGC {
             get => _useRtlAgc;
             set {
                 _useRtlAgc = value;
-                if (_dev != IntPtr.Zero) {
+                if (_dev != IntPtr.Zero) 
                     LibraryWrapper.rtlsdr_set_agc_mode(_dev, _useRtlAgc ? 1 : 0);
-                }
             }
         }
 
@@ -51,9 +49,8 @@ namespace libRtlSdrSharp {
             get => _tunerGain;
             set {
                 _tunerGain = value;
-                if (_dev != IntPtr.Zero) {
+                if (_dev != IntPtr.Zero) 
                     LibraryWrapper.rtlsdr_set_tuner_gain(_dev, _tunerGain);
-                }
             }
         }
 
@@ -63,9 +60,9 @@ namespace libRtlSdrSharp {
             set {
                 _centerFrequency = value;
                 if (_dev == IntPtr.Zero) return;
-                if (LibraryWrapper.rtlsdr_set_center_freq(_dev, _centerFrequency) != 0) {
+                
+                if (LibraryWrapper.rtlsdr_set_center_freq(_dev, _centerFrequency) != 0)
                     throw new ArgumentException("The frequency cannot be set: " + value);
-                }
             }
         }
 
@@ -75,9 +72,8 @@ namespace libRtlSdrSharp {
             get => _sampleRate;
             set {
                 _sampleRate = value;
-                if (_dev != IntPtr.Zero) {
+                if (_dev != IntPtr.Zero) 
                     LibraryWrapper.rtlsdr_set_sample_rate(_dev, _sampleRate);
-                }
             }
         }
 
@@ -86,9 +82,8 @@ namespace libRtlSdrSharp {
             get => _useBiasTee;
             set {
                 _useBiasTee = value;
-                if (_dev != IntPtr.Zero) {
+                if (_dev != IntPtr.Zero) 
                     LibraryWrapper.rtlsdr_set_bias_tee(_dev, value ? 1 : 0);
-                }
             }
         }
 
@@ -97,9 +92,8 @@ namespace libRtlSdrSharp {
             get => _frequencyCorrection;
             set {
                 _frequencyCorrection = value;
-                if (_dev != IntPtr.Zero) {
+                if (_dev != IntPtr.Zero) 
                     LibraryWrapper.rtlsdr_set_freq_correction(_dev, _frequencyCorrection);
-                }
             }
         }
 
@@ -108,9 +102,8 @@ namespace libRtlSdrSharp {
             get => _samplingMode;
             set {
                 _samplingMode = value;
-                if (_dev != IntPtr.Zero) {
-                    LibraryWrapper.rtlsdr_set_direct_sampling(_dev, (int)_samplingMode);
-                }
+                if (_dev != IntPtr.Zero) 
+                    LibraryWrapper.rtlsdr_set_direct_sampling(_dev, (int) _samplingMode);
             }
         }
 
@@ -120,11 +113,12 @@ namespace libRtlSdrSharp {
             set {
                 _useOffsetTuning = value;
 
-                if (_dev != IntPtr.Zero) {
+                if (_dev != IntPtr.Zero) 
                     LibraryWrapper.rtlsdr_set_offset_tuning(_dev, _useOffsetTuning ? 1 : 0);
-                }
             }
         }
+
+        public bool UseLookupTable { get; set; }
         #endregion
 
         #region Supported Features
@@ -139,39 +133,41 @@ namespace libRtlSdrSharp {
         public static readonly uint ReadLength = (16 * 16384);   /* 256k */
         #endregion
 
-        private static float[] _lookUpTable;
+        private static readonly float[] LookUpTable;
 
         static RtlDevice() {
-            _lookUpTable = new float[256];
+            LookUpTable = new float[256];
             const float scale = 1.0f / 127.0f;
 
             for (var i = 0; i < 256; i++) {
-                _lookUpTable[i] = (i - 128) * scale;
+                LookUpTable[i] = (i - 128) * scale;
             }
         }
         public RtlDevice(int index) {
             Index = (uint)index;
             Buffer = new ComplexBuffer();
-
+            UseLookupTable = false;
             int r = LibraryWrapper.rtlsdr_open(out _dev, Index);
-            if (r != 0) {
+            
+            if (r != 0)
                 throw new ApplicationException("Cannot open RTL device. Is the device locked somewhere?");
-            }
+
             int count = _dev == IntPtr.Zero ? 0 : LibraryWrapper.rtlsdr_get_tuner_gains(_dev, null);
-            if (count < 0) {
-                count = 0;
-            }
+            
+            if (count < 0) count = 0;
+
             SupportsOffsetTuning = LibraryWrapper.rtlsdr_set_offset_tuning(_dev, 0) != -2;
             SupportedGains = new int[count];
-            if (count >= 0) {
+            
+            if (count >= 0) 
                 LibraryWrapper.rtlsdr_get_tuner_gains(_dev, SupportedGains);
-            }
+
             Name = LibraryWrapper.rtlsdr_get_device_name(Index);
         }
 
         public static Dictionary<int, string> GetAvailableDevices() {
             var result = new Dictionary<int, string>();
-            int count = (int)LibraryWrapper.rtlsdr_get_device_count();
+            var count = (int)LibraryWrapper.rtlsdr_get_device_count();
 
             for (var i = 0; i < count; i++) {
                 string name = LibraryWrapper.rtlsdr_get_device_name((uint)i);
@@ -191,38 +187,36 @@ namespace libRtlSdrSharp {
         /// Setup the device and begin reading for samples
         /// </summary>
         public void Start() {
-            if (_worker != null) {
+            if (_worker != null)
                 throw new ApplicationException("Already running");
-            }
 
             int r = LibraryWrapper.rtlsdr_set_center_freq(_dev, _centerFrequency);
-            if (r != 0) {
+
+            if (r != 0)
                 throw new ApplicationException("Cannot access RTL device");
-            }
 
             r = LibraryWrapper.rtlsdr_set_tuner_gain_mode(_dev, _useTunerAgc ? 0 : 1);
-            if (r != 0) {
+            if (r != 0)
                 throw new ApplicationException("Cannot access RTL device");
-            }
 
             if (!_useTunerAgc) {
                 r = LibraryWrapper.rtlsdr_set_tuner_gain(_dev, _tunerGain);
-                if (r != 0) {
+
+                if (r != 0)
                     throw new ApplicationException("Cannot access RTL device");
-                }
             }
 
             LibraryWrapper.rtlsdr_set_freq_correction(_dev, 52);
-            if (_useRtlAgc) {
+            
+            if (_useRtlAgc) 
                 LibraryWrapper.rtlsdr_set_agc_mode(_dev, 1);
-            }
 
             LibraryWrapper.rtlsdr_set_center_freq(_dev, DefaultFrequency);
             LibraryWrapper.rtlsdr_set_sample_rate(_dev, SampleRate);
             r = LibraryWrapper.rtlsdr_reset_buffer(_dev);
-            if (r != 0) {
+
+            if (r != 0)
                 throw new ApplicationException("Cannot access RTL device");
-            }
 
             _worker = new Thread(StreamProc) {Priority = ThreadPriority.Highest};
             _worker.Start();
@@ -267,10 +261,10 @@ namespace libRtlSdrSharp {
             var j = 0;
 
             for (var i = 0; i < len; i+=2) {
-                var real = actualBuffer[i];//_lookUpTable[actualBuffer[i]];
-                var imag = actualBuffer[i + 1];//_lookUpTable[actualBuffer[i+1]];
+                byte real = UseLookupTable ? (byte)LookUpTable[actualBuffer[i]] : actualBuffer[i];
+                byte imaginary = UseLookupTable ? (byte)LookUpTable[actualBuffer[i+1]] : actualBuffer[i+1];
 
-                var myComplex = new Complex(real, imag);
+                var myComplex = new Complex(real, imaginary);
                 myList[j++] = (myComplex);
             }
 

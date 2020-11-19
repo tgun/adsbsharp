@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace libRtlSdrSharp {
+namespace BetterSDR.RTLSDR {
     [UnmanagedFunctionPointer(CallingConvention.Cdecl)]
     public delegate void RtlSdrReadAsyncDelegate(IntPtr buf, uint len, IntPtr ctx);
     
@@ -28,7 +28,7 @@ namespace libRtlSdrSharp {
         private static extern IntPtr rtlsdr_get_device_name_native(uint index);
 
         public static string rtlsdr_get_device_name(uint index) {
-            var strptr = rtlsdr_get_device_name_native(index);
+            IntPtr strptr = rtlsdr_get_device_name_native(index);
             return Marshal.PtrToStringAnsi(strptr);
         }
 

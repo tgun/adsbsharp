@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29728.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ADSBSharp", "ADSBSharp\ADSBSharp.csproj", "{5F64FCBB-756D-46D8-BFD6-7B2ADA9F3850}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libRtlSdrSharp", "libRtlSdrSharp\libRtlSdrSharp.csproj", "{0DE99142-09C0-4841-A6D7-0C8356D6A5B5}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BetterSDR.RTLSDR", "libRtlSdrSharp\BetterSDR.RTLSDR.csproj", "{0DE99142-09C0-4841-A6D7-0C8356D6A5B5}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "libModeSharp", "libModeSharp\libModeSharp.csproj", "{C683F370-E4F1-440F-B830-90A2CE5BAFED}"
 EndProject

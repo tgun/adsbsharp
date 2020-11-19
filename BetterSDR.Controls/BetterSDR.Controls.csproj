@@ -42,6 +42,24 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FrequencyEdit.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="FrequencyEdit.Designer.cs">
+      <DependentUpon>FrequencyEdit.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrequencyEditDidgit.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="FrequencyEditDidgit.Designer.cs">
+      <DependentUpon>FrequencyEditDidgit.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FrequencyEditSeperator.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="FrequencyEditSeperator.Designer.cs">
+      <DependentUpon>FrequencyEditSeperator.cs</DependentUpon>
+    </Compile>
     <Compile Include="SpectrumAnalyzer.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -52,6 +70,12 @@
     <Service Include="{94E38DFF-614B-4cbd-B67C-F211BB35CE8B}" />
   </ItemGroup>
   <ItemGroup>
+    <EmbeddedResource Include="FrequencyEditDidgit.resx">
+      <DependentUpon>FrequencyEditDidgit.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrequencyEditSeperator.resx">
+      <DependentUpon>FrequencyEditSeperator.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="SpectrumAnalyzer.resx">
       <DependentUpon>SpectrumAnalyzer.cs</DependentUpon>
     </EmbeddedResource>
