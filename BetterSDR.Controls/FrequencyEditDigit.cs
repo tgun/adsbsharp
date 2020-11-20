@@ -13,6 +13,7 @@ namespace BetterSDR.Controls {
     public partial class FrequencyEditDigit : UserControl, IRenderable {
         public bool IsCursorInside { get; private set; }
         public long Weight { get; set; }
+        public int DigitIndex { get; set; }
 
         private int _displayedDigit;
         public int DisplayedDigit {
@@ -48,7 +49,6 @@ namespace BetterSDR.Controls {
         private bool _masked;
         private int _lastMouseY;
         private bool _isLastUpperHalf;
-        private int _digitIndex;
 
 
         private readonly ImageAttributes _maskedAttributes = new ImageAttributes();
@@ -56,7 +56,7 @@ namespace BetterSDR.Controls {
 
         public FrequencyEditDigit(int digitIndex) {
             InitializeComponent();
-            _digitIndex = digitIndex;
+            DigitIndex = digitIndex;
             _displayedDigit = 0;
             var cm = new ColorMatrix {Matrix33 = Constants.MaskedDigitTransparency};
             _maskedAttributes.SetColorMatrix(cm, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
