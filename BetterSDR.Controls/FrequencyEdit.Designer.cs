@@ -23,8 +23,17 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
-            components = new System.ComponentModel.Container();
+            this.SuspendLayout();
+            // 
+            // FrequencyEdit
+            // 
+            this.AutoScaleDimensions = new System.Drawing.SizeF(19F, 37F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.Transparent;
+            this.Name = "FrequencyEdit";
+            this.Size = new System.Drawing.Size(1838, 884);
+            this.ResumeLayout(false);
+
         }
 
         #endregion

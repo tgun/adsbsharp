@@ -5,8 +5,6 @@ using System.Windows.Forms;
 
 namespace BetterSDR.Controls {
     public partial class FrequencyEditSeperator : UserControl {
-        private const float MaskedDigitTransparency = 0.3f;
-
         public Image Icon { get; set; }
         public bool Masked { get; set; }
 
@@ -37,7 +35,7 @@ namespace BetterSDR.Controls {
         private void FrequencyEditSeperator_Load(object sender, EventArgs e) {
             UpdateStyles();
 
-            var cm = new ColorMatrix {Matrix33 = MaskedDigitTransparency};
+            var cm = new ColorMatrix {Matrix33 = Constants.MaskedDigitTransparency};
             _maskedAttributes.SetColorMatrix(cm, ColorMatrixFlag.Default, ColorAdjustType.Bitmap);
         }
     }

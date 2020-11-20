@@ -42,17 +42,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Constants.cs" />
     <Compile Include="FrequencyEdit.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="FrequencyEdit.Designer.cs">
       <DependentUpon>FrequencyEdit.cs</DependentUpon>
     </Compile>
-    <Compile Include="FrequencyEditDidgit.cs">
+    <Compile Include="FrequencyEditDigit.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="FrequencyEditDidgit.Designer.cs">
-      <DependentUpon>FrequencyEditDidgit.cs</DependentUpon>
+    <Compile Include="FrequencyEditDigit.Designer.cs">
+      <DependentUpon>FrequencyEditDigit.cs</DependentUpon>
     </Compile>
     <Compile Include="FrequencyEditSeperator.cs">
       <SubType>UserControl</SubType>
@@ -70,8 +71,11 @@
     <Service Include="{94E38DFF-614B-4cbd-B67C-F211BB35CE8B}" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="FrequencyEditDidgit.resx">
-      <DependentUpon>FrequencyEditDidgit.cs</DependentUpon>
+    <EmbeddedResource Include="FrequencyEdit.resx">
+      <DependentUpon>FrequencyEdit.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FrequencyEditDigit.resx">
+      <DependentUpon>FrequencyEditDigit.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FrequencyEditSeperator.resx">
       <DependentUpon>FrequencyEditSeperator.cs</DependentUpon>

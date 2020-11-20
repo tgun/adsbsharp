@@ -1,5 +1,5 @@
 ﻿namespace BetterSDR.Controls {
-    partial class FrequencyEditDidgit {
+    partial class FrequencyEditDigit {
         /// <summary> 
         /// Required designer variable.
         /// </summary>

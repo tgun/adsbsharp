@@ -18,6 +18,7 @@ namespace BetterSDR {
             InitializeComponent();
             timer1.Interval = 1;
             InitializePlot();
+            frequencyEdit1.Frequency = 0100300000;
         }
 
         private void InitializePlot() {
@@ -131,7 +132,6 @@ namespace BetterSDR {
 
             _rtlDevice.UseRtlAGC = false;
             _rtlDevice.UseTunerAGC = false;
-            _rtlDevice.TunerGain = trackBar1.Value;
         }
 
         private void button2_Click(object sender, EventArgs e) {
