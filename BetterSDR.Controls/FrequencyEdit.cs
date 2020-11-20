@@ -1,16 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
 using System.Drawing;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BetterSDR.Controls {
     public partial class FrequencyEdit : UserControl {
         public bool EntryModeActive { get; set; }
+        public int StepSize { get; set; }
+        public EntryMode EntryMode { get; set; }
         public long Frequency {
             get => _frequency;
             set {
@@ -20,14 +16,17 @@ namespace BetterSDR.Controls {
             }
         }
 
+        // -- Internal state tracking
         private long _frequency;
         private readonly FrequencyEditDigit[] _digits = new FrequencyEditDigit[Constants.DigitCount];
         private readonly FrequencyEditSeperator[] _separators = new FrequencyEditSeperator[Constants.DigitSeparatorCount];
+
         public FrequencyEdit() {
             InitializeComponent();
             Configure();
         }
 
+        #region Initialization
         private void Configure() {
             // -- Remove any previously existing controls
             RemoveExistingImages();
@@ -116,7 +115,10 @@ namespace BetterSDR.Controls {
 
             return numbers;
         }
-
+        #endregion
+        /// <summary>
+        /// Redraws the child elements to reflect the current frequency value of the control
+        /// </summary>
         private void UpdateDigitsValues() {
             if (_digits[0] == null)
                 return;
@@ -151,6 +153,12 @@ namespace BetterSDR.Controls {
                 if (_digits[i] != null)
                     _digits[i].Masked = (_digits[i].Weight > frequency);
             }
+        }
+
+        private void renderTimer_Tick(object sender, EventArgs e) {
+            foreach (var ctrl in Controls)
+                if (ctrl is IRenderable renderable)
+                    renderable.Render();
         }
     }
 }

@@ -23,7 +23,15 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
+            this.components = new System.ComponentModel.Container();
+            this.renderTimer = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
+            // 
+            // renderTimer
+            // 
+            this.renderTimer.Enabled = true;
+            this.renderTimer.Interval = 30;
+            this.renderTimer.Tick += new System.EventHandler(this.renderTimer_Tick);
             // 
             // FrequencyEdit
             // 
@@ -37,5 +45,7 @@
         }
 
         #endregion
+
+        private System.Windows.Forms.Timer renderTimer;
     }
 }

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BetterSDR.Controls {
-    public partial class FrequencyEditDigit : UserControl {
+    public partial class FrequencyEditDigit : UserControl, IRenderable {
         public bool IsCursorInside { get; private set; }
         public long Weight { get; set; }
 
@@ -140,6 +140,13 @@ namespace BetterSDR.Controls {
 
                 e.Graphics.FillRectangle(transparentBrush, rect);
             }
+        }
+
+        public void Render()
+        {
+            if (!_isRenderNeeded) return;
+            Invalidate();
+            _isRenderNeeded = false;
         }
     }
 }

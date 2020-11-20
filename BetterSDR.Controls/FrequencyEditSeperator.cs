@@ -4,7 +4,7 @@ using System.Drawing.Imaging;
 using System.Windows.Forms;
 
 namespace BetterSDR.Controls {
-    public partial class FrequencyEditSeperator : UserControl {
+    public partial class FrequencyEditSeperator : UserControl, IRenderable {
         public Image Icon { get; set; }
         public bool Masked { get; set; }
 

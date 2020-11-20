@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
+    <Compile Include="EntryMode.cs" />
     <Compile Include="FrequencyEdit.cs">
       <SubType>UserControl</SubType>
     </Compile>
@@ -61,6 +62,7 @@
     <Compile Include="FrequencyEditSeperator.Designer.cs">
       <DependentUpon>FrequencyEditSeperator.cs</DependentUpon>
     </Compile>
+    <Compile Include="IRenderable.cs" />
     <Compile Include="SpectrumAnalyzer.cs">
       <SubType>UserControl</SubType>
     </Compile>
