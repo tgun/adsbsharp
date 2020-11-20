@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Constants.cs" />
+    <Compile Include="DigitClickEventArgs.cs" />
     <Compile Include="EntryMode.cs" />
     <Compile Include="FrequencyEdit.cs">
       <SubType>UserControl</SubType>

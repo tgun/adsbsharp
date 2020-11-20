@@ -123,10 +123,10 @@ namespace BetterSDR.Controls {
             if (_digits[0] == null)
                 return;
 
-            var currentFrequency = _frequency;
+            long currentFrequency = _frequency;
 
-            for (var i = Constants.DigitCount - 1; i >= 0; i--) {
-                var digit = currentFrequency / _digits[i].Weight;
+            for (int i = Constants.DigitCount - 1; i >= 0; i--) {
+                long digit = currentFrequency / _digits[i].Weight;
                 _digits[i].DisplayedDigit = (int)digit;
                 currentFrequency -= (_digits[i].DisplayedDigit * _digits[i].Weight);
             }
@@ -138,14 +138,14 @@ namespace BetterSDR.Controls {
         /// Masks (Greys out) numbers/separators if it is a zero.
         /// </summary>
         private void UpdateDigitMask() {
-            var frequency = _frequency;
+            long frequency = _frequency;
 
             if (frequency < 0)
                 return;
 
             for (var i = 1; i < Constants.DigitCount; i++) {
                 if ((i + 1) % 3 == 0 && i != Constants.DigitCount - 1) {
-                    var separatorIndex = i / 3;
+                    int separatorIndex = i / 3;
                     if (_separators[separatorIndex] != null) {
                         _separators[separatorIndex].Masked = (_digits[i + 1].Weight > frequency);
                     }
@@ -156,7 +156,7 @@ namespace BetterSDR.Controls {
         }
 
         private void renderTimer_Tick(object sender, EventArgs e) {
-            foreach (var ctrl in Controls)
+            foreach (object ctrl in Controls)
                 if (ctrl is IRenderable renderable)
                     renderable.Render();
         }

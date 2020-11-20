@@ -64,22 +64,26 @@ namespace BetterSDR.Controls {
 
         #region Mouse Events
 
-        private void FrequencyEditDidgit_MouseDown(object sender, MouseEventArgs e) {
-
+        private void FrequencyEditDigit_MouseDown(object sender, MouseEventArgs e) {
+            _isUpperHalf = (e.Y <= ClientRectangle.Height / 2);
+            var eventArgs = new DigitClickEventArgs(_isUpperHalf, e.Button);
+            OnDigitClick?.Invoke(this, eventArgs);
+            tickTimer.Interval = 300;
+            tickTimer.Enabled = true;
         }
 
-        private void FrequencyEditDidgit_MouseEnter(object sender, EventArgs e) {
+        private void FrequencyEditDigit_MouseEnter(object sender, EventArgs e) {
             IsCursorInside = true;
             _isRenderNeeded = true;
             Focus();
         }
 
-        private void FrequencyEditDidgit_MouseLeave(object sender, EventArgs e) {
+        private void FrequencyEditDigit_MouseLeave(object sender, EventArgs e) {
             IsCursorInside = false;
             _isRenderNeeded = true;
         }
 
-        private void FrequencyEditDidgit_MouseMove(object sender, MouseEventArgs e) {
+        private void FrequencyEditDigit_MouseMove(object sender, MouseEventArgs e) {
             _isLastUpperHalf = e.Y <= ClientRectangle.Height / 2;
             _lastMouseY = e.Y;
 
@@ -90,17 +94,18 @@ namespace BetterSDR.Controls {
             _isLastUpperHalf = _isUpperHalf;
         }
 
-        private void FrequencyEditDidgit_MouseUp(object sender, MouseEventArgs e) {
-
+        private void FrequencyEditDigit_MouseUp(object sender, MouseEventArgs e) {
+            tickTimer.Enabled = false;
         }
 
-        private void FrequencyEditDidgit_Scroll(object sender, ScrollEventArgs e) {
-
+        private void FrequencyEditDigit_Scroll(object sender, ScrollEventArgs e) {
+            var args = new DigitClickEventArgs((e.NewValue - e.OldValue > 0), MouseButtons.Left);
+            OnDigitClick?.Invoke(this, args);
         }
 
         #endregion
-
-        private void FrequencyEditDidgit_Paint(object sender, PaintEventArgs e) {
+        #region Rendering
+        private void FrequencyEditDigit_Paint(object sender, PaintEventArgs e) {
             DrawNumber(e);
             DrawMouseover(e);
             DrawHighlight(e);
@@ -117,8 +122,8 @@ namespace BetterSDR.Controls {
             if (ImageList == null || DisplayedDigit >= ImageList.Length)
                 return;
 
-            var img = ImageList[DisplayedDigit];
-            var attributes = ((_masked && !IsCursorInside) || !Parent.Enabled) ? _maskedAttributes : null;
+            Bitmap img = ImageList[DisplayedDigit];
+            ImageAttributes attributes = ((_masked && !IsCursorInside) || !Parent.Enabled) ? _maskedAttributes : null;
             var rectangle = new Rectangle(0, 0, img.Width, img.Height);
             e.Graphics.DrawImage(img, rectangle, 0.0f, 0.0f, img.Width, img.Height, GraphicsUnit.Pixel, attributes);
         }
@@ -147,6 +152,33 @@ namespace BetterSDR.Controls {
             if (!_isRenderNeeded) return;
             Invalidate();
             _isRenderNeeded = false;
+        }
+        #endregion
+
+        #region Event Emitters
+
+        public event DigitClickEvent OnDigitClick;
+
+        #endregion
+
+        private void tickTimer_Tick(object sender, EventArgs e) {
+            var args = new DigitClickEventArgs(_isLastUpperHalf, MouseButtons.Left);
+            OnDigitClick?.Invoke(this, args);
+            tickTimer.Tag = ((int) tickTimer.Tag) + 1;
+            switch ((int) tickTimer.Tag) {
+                case 10:
+                    tickTimer.Interval = 200;
+                    break;
+                case 20:
+                    tickTimer.Interval = 100;
+                    break;
+                case 50:
+                    tickTimer.Interval = 50;
+                    break;
+                case 100:
+                    tickTimer.Interval = 20;
+                    break;
+            }
         }
     }
 }
