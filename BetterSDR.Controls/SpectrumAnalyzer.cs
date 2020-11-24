@@ -177,6 +177,7 @@ namespace BetterSDR.Controls {
             }
         }
 
+
         private void DrawBackground() {
             _backgroundGraphics.Clear(BackgroundColor);
 

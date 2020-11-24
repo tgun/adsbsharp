@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Windows.Forms;
 
 namespace BetterSDR.Controls {
+    public delegate void FrequencyUpdatedArgs(long frequency);
+
     public partial class FrequencyEdit : UserControl {
         public bool EntryModeActive { get; set; }
         public int StepSize { get; set; }
@@ -93,8 +95,10 @@ namespace BetterSDR.Controls {
             if (newFrequency == _frequency)
                 return;
 
+            _frequency = newFrequency;
             // -- Trigger update
             UpdateDigitsValues();
+            FrequencyUpdated?.Invoke(newFrequency);
         }
 
         #region Digit Control
@@ -245,5 +249,12 @@ namespace BetterSDR.Controls {
                 if (ctrl is IRenderable renderable)
                     renderable.Render();
         }
+
+        #region Event Emitters
+
+        public event FrequencyUpdatedArgs FrequencyUpdated;
+
+
+        #endregion
     }
 }

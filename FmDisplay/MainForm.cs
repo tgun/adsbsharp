@@ -1,10 +1,12 @@
 ﻿using BetterSDR.Common;
 using System;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Forms;
 using BetterSDR.RTLSDR;
 using MathNet.Numerics;
 using ScottPlot;
+using ScottPlot.Drawing;
 using Complex = System.Numerics.Complex;
 using Fourier = BetterSDR.Common.Fourier;
 
@@ -14,14 +16,20 @@ namespace BetterSDR {
         private double[] _qFft;
         private Complex[] _rawPcm;
         private readonly object _pcmLock = new object();
+        private Thread _renderThread;
+
         public MainForm() {
             InitializeComponent();
-            timer1.Interval = 1;
             InitializePlot();
             frequencyEdit1.Frequency = 0100300000;
         }
 
         private void InitializePlot() {
+            if (this.InvokeRequired) {
+                this.Invoke(new BlankEventArgs(InitializePlot));
+                return;
+            }
+
             if (_qFft == null)
                 return;
 
@@ -29,14 +37,15 @@ namespace BetterSDR {
 
             double fftSpacing = (double)_rtlDevice.SampleRate / _qFft.Length;
             iPlot.plt.Clear();
-            PlottableSignal signal = iPlot.plt.PlotSignal(_qFft, fftSpacing, markerSize: 0);
+            PlottableSignal signal = iPlot.plt.PlotSignal(_qFft, fftSpacing, markerSize: 0, useParallel: false);
             signal.fillType = FillType.FillBelow;
             signal.fillColor1 = Color.Blue;
-            signal.gradientFillColor1 = Color.Transparent;
-
+            signal.gradientFillColor1 = Color.Transparent; 
             iPlot.plt.PlotHLine(0, Color.Black);
             iPlot.plt.YLabel("Power");
             iPlot.plt.XLabel("Frequency");
+            iPlot.plt.Style(Style.Gray1);
+            iPlot.plt.Colorset(Colorset.OneHalfDark);
             iPlot.Render();
         }
 
@@ -55,8 +64,29 @@ namespace BetterSDR {
             // 1.090.000.000
             // 0.100.300.000
             myDevice.Frequency = 0100300000;
-
             myDevice.Start();
+
+            if (_renderThread == null) {
+                _renderThread = new Thread(() => {
+                    while (true) {
+                        if (_rtlDevice == null) {
+                            Thread.Sleep(2);
+                            continue;
+                        }
+
+                        updateFFT();
+
+                        if (iPlot.plt.GetPlottables().Count == 0)
+                            InitializePlot();
+
+                        iPlot.Render();
+                        Thread.Sleep(1);
+                    }
+                });
+
+                _renderThread.Start();
+                
+            }
         }
 
         private void MyDevice_DataAvailable() {
@@ -70,8 +100,13 @@ namespace BetterSDR {
                 _rawPcm = mySample;
             }
         }
-
+        public delegate void BlankEventArgs();
         private void updateFFT() {
+            if (this.InvokeRequired) {
+                this.Invoke(new BlankEventArgs(updateFFT));
+                return;
+            }
+
             if (_rawPcm == null)
                 return;
 
@@ -101,44 +136,25 @@ namespace BetterSDR {
             Fourier.SpectrumPower(myCopy, ref _qFft, myCopy.Length, compensation);
             spectrumAnalyzer1.Render(_qFft);
 
-            var scaledPower = new byte[_rawPcm.Length];
-            Fourier.ScaleFFT(_qFft, ref scaledPower, scaledPower.Length, 0, 2000);
+            //var scaledPower = new byte[_rawPcm.Length];
+            //Fourier.ScaleFFT(_qFft, ref scaledPower, scaledPower.Length, 0, 2000);
 
-            var temp = new byte[scaledPower.Length];
-            Fourier.SmoothCopy(scaledPower, ref temp, _qFft.Length, scaledPower.Length, 1.0f, 0);
+            //var temp = new byte[scaledPower.Length];
+            //Fourier.SmoothCopy(scaledPower, ref temp, _qFft.Length, scaledPower.Length, 1.0f, 0);
 
-            for (var i = 0; i < _qFft.Length; i++) {
-                // -- ? Attack : Decay
-                double ratio = _qFft[i] < temp[i] ? 0.9 : 0.3;
-                _qFft[i] = Math.Round(_qFft[i] * (1 - ratio) + temp[i] * ratio);
-            }
-        }
-
-        private void timer1_Tick(object sender, EventArgs e) {
-            if (_rtlDevice == null)
-                return;
-
-            updateFFT();
-
-            if (iPlot.plt.GetPlottables().Count == 0)
-                InitializePlot();
-
-            iPlot.Render();
-        }
-
-        private void trackBar1_Scroll(object sender, EventArgs e) {
-            if (_rtlDevice == null || !_rtlDevice.IsStreaming) 
-                return;
-
-            _rtlDevice.UseRtlAGC = false;
-            _rtlDevice.UseTunerAGC = false;
-        }
-
-        private void button2_Click(object sender, EventArgs e) {
+            //for (var i = 0; i < _qFft.Length; i++) {
+            //    // -- ? Attack : Decay
+            //    double ratio = _qFft[i] < temp[i] ? 0.9 : 0.3;
+            //    _qFft[i] = Math.Round(_qFft[i] * (1 - ratio) + temp[i] * ratio);
+            //}
         }
 
         private void Form1_Load(object sender, EventArgs e) {
 
+        }
+
+        private void frequencyEdit1_FrequencyUpdated(long frequency) {
+            _rtlDevice.Frequency = (uint) frequency;
         }
     }
 }
