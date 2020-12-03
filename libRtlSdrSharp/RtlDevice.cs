@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms;
 using BetterSDR.Common;
 
 namespace BetterSDR.RTLSDR {
@@ -15,7 +16,7 @@ namespace BetterSDR.RTLSDR {
     /// <summary>
     /// C# Wrapper for a friendly interface with an RTL-SDR Dongle
     /// </summary>
-    public sealed class RtlDevice : IDisposable {
+    public sealed class RtlDevice : IDisposable, ISampleProvider {
         private const uint DefaultFrequency = 1090000000;
         private const int DefaultSampleRate = 2000000;
 
@@ -60,10 +61,13 @@ namespace BetterSDR.RTLSDR {
             set {
                 _centerFrequency = value;
                 if (_dev == IntPtr.Zero) return;
-                
-                if (LibraryWrapper.rtlsdr_set_center_freq(_dev, _centerFrequency) != 0)
-                    throw new ArgumentException("The frequency cannot be set: " + value);
+
+                LibraryWrapper.rtlsdr_set_center_freq(_dev, _centerFrequency);
             }
+        }
+
+        public Form GetSettingsForm() {
+            return _settingsForm;
         }
 
         private uint _sampleRate = DefaultSampleRate;
@@ -134,7 +138,7 @@ namespace BetterSDR.RTLSDR {
         #endregion
 
         private static readonly float[] LookUpTable;
-
+        private SettingsForm _settingsForm;
         static RtlDevice() {
             LookUpTable = new float[256];
             const float scale = 1.0f / 127.0f;
@@ -142,11 +146,14 @@ namespace BetterSDR.RTLSDR {
             for (var i = 0; i < 256; i++) {
                 LookUpTable[i] = (i - 128) * scale;
             }
+            
         }
         public RtlDevice(int index) {
             Index = (uint)index;
             Buffer = new ComplexBuffer();
             UseLookupTable = false;
+            _settingsForm = new SettingsForm();
+
             int r = LibraryWrapper.rtlsdr_open(out _dev, Index);
             
             if (r != 0)
@@ -278,5 +285,5 @@ namespace BetterSDR.RTLSDR {
         #endregion
     }
 
-    public delegate void EmptyEventDelegate();
+
 }

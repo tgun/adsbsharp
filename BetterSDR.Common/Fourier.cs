@@ -23,6 +23,21 @@ namespace BetterSDR.Common {
             }
         }
 
+        public static void ScaleFFT(float[] src, ref byte[] dest, int length, float minPower, float maxPower) {
+            var scale = Byte.MaxValue / (maxPower - minPower);
+            for (var i = 0; i < length; i++) {
+                var magnitude = src[i];
+                if (magnitude < minPower) {
+                    magnitude = minPower;
+                }
+                else if (magnitude > maxPower) {
+                    magnitude = maxPower;
+                }
+                dest[i] = (byte)((magnitude - minPower) * scale);
+            }
+        }
+
+
         public static void ScaleFFT(double[] src, ref byte[] dest, int length, float minPower, float maxPower) {
             var scale = Byte.MaxValue / (maxPower - minPower);
             for (var i = 0; i < length; i++) {
@@ -37,7 +52,10 @@ namespace BetterSDR.Common {
             }
         }
 
-        public static void SmoothCopy(byte[] srcPtr, ref byte[] dstPtr, int sourceLength, int destinationLength, float scale, int offset) {
+        public static void SmoothCopy(byte[] srcPtr, ref byte[] dstPtr, float scale, int offset) {
+            int sourceLength = srcPtr.Length;
+            int destinationLength = dstPtr.Length;
+
             var r = sourceLength / scale / destinationLength;
             if (r > 1.0f) {
                 var n = (int)Math.Ceiling(r);
@@ -64,6 +82,175 @@ namespace BetterSDR.Common {
                 }
             }
         }
+        public static void SmoothMinCopy(float[] source, ref float[] destination, float zoom = 1f, float offset = 0f) {
+            int sourceLength = source.Length;
+            int destinationLength = destination.Length;
+
+            if (zoom < 1f) zoom = 1f;
+
+            float num = sourceLength / (zoom * destinationLength);
+            float num2 = sourceLength * (offset + 0.5f * (1f - 1f / zoom));
+
+            if (num > 1f) {
+                var num3 = (int)Math.Ceiling(num * 0.5);
+                int num4 = -1;
+
+                for (var i = 0; i < destinationLength; i++) {
+                    var num5 = 600f;
+                    for (int j = -num3; j <= num3; j++) {
+                        var num6 = (int)Math.Round(num2 + num * i + j);
+                        if (num6 > num4 && num6 >= 0 && num6 < sourceLength && num5 > source[num6]) num5 = (float)source[num6];
+                        num4 = num6;
+                    }
+                    destination[i] = num5;
+                }
+
+                return;
+            }
+
+            for (var k = 0; k < destinationLength; k++) {
+                var num7 = (int)(num * k + num2);
+                if (num7 >= 0 && num7 < sourceLength) destination[k] = source[num7];
+            }
+        }
+
+        public static void SmoothMinCopy(double[] source, ref double[] destination, float zoom = 1f, float offset = 0f) {
+            int sourceLength = source.Length;
+            int destinationLength = destination.Length;
+
+            if (zoom < 1f) zoom = 1f;
+
+            float num = sourceLength / (zoom * destinationLength);
+            float num2 = sourceLength * (offset + 0.5f * (1f - 1f / zoom));
+            
+            if (num > 1f) {
+                var num3 = (int)Math.Ceiling(num * 0.5);
+                int num4 = -1;
+                
+                for (var i = 0; i < destinationLength; i++) {
+                    var num5 = 600f;
+                    for (int j = -num3; j <= num3; j++) {
+                        var num6 = (int)Math.Round(num2 + num * i + j);
+                        if (num6 > num4 && num6 >= 0 && num6 < sourceLength && num5 > source[num6]) num5 = (float)source[num6];
+                        num4 = num6;
+                    }
+                    destination[i] = num5;
+                }
+
+                return;
+            }
+
+            for (var k = 0; k < destinationLength; k++) {
+                var num7 = (int)(num * k + num2);
+                if (num7 >= 0 && num7 < sourceLength) destination[k] = source[num7];
+            }
+        }
+
+        public static void SmoothMaxCopy(float[] source, ref float[] dest, float zoom = 1f, float offset = 0f) {
+            var sourceLength = source.Length;
+            var destLength = dest.Length;
+
+            if (zoom < 1f)
+                zoom = 1f;
+
+            float r = sourceLength / (zoom * destLength);
+            float t = sourceLength * (offset + 0.5f * (1f - 1f / zoom));
+            if (r > 1f) {
+                var halfed = (int)Math.Ceiling(r * 0.5);
+                var k = -1;
+                for (var i = 0; i < destLength; i++) {
+                    var d = -600f;
+                    for (var j = -halfed; j <= halfed; j++) {
+                        int meh = (int)Math.Round(t + r * i + j);
+                        if (meh > k && meh >= 0 && meh < sourceLength && d < source[meh])
+                            d = source[meh];
+                        k = meh;
+                    }
+
+                    dest[i] = d;
+                }
+
+                return;
+            }
+
+            int num7 = (int)Math.Ceiling(1f / r);
+            float num8 = 1f / num7;
+            int num9 = 0;
+            int num10 = (int)t;
+            int num11 = num10 + 1;
+            int num12 = sourceLength - 1;
+            for (int k = 0; k < destLength; k++) {
+                int num13 = (int)(t + k * r);
+                if (num13 > num10) {
+                    num9 = 0;
+                    if (num13 >= num12) {
+                        num10 = num12;
+                        num11 = num12;
+                    }
+                    else {
+                        num10 = num13;
+                        num11 = num13 + 1;
+                    }
+                }
+
+                dest[k] = (source[num10] * (num7 - num9) + source[num11] * num9) * num8;
+                num9++;
+            }
+        }
+
+
+        public static void SmoothMaxCopy(double[] source, ref double[] dest, float zoom = 1f, float offset = 0f) {
+            var sourceLength = source.Length;
+            var destLength = dest.Length;
+
+            if (zoom < 1f)
+                zoom = 1f;
+
+            float r = sourceLength / (zoom * destLength);
+            float t = sourceLength * (offset + 0.5f * (1f - 1f / zoom));
+            if (r > 1f) {
+                var halfed = (int) Math.Ceiling(r * 0.5);
+                var k = -1;
+                for (var i = 0; i < destLength; i++) {
+                    var d = -600d;
+                    for (var j = -halfed; j <= halfed; j++) {
+                        int meh = (int) Math.Round(t + r * i + j);
+                        if (meh > k && meh >= 0 && meh < sourceLength && d < source[meh])
+                            d = source[meh];
+                        k = meh;
+                    }
+
+                    dest[i] = d;
+                }
+
+                return;
+            }
+
+            int num7 = (int) Math.Ceiling(1f / r);
+            float num8 = 1f / num7;
+            int num9 = 0;
+            int num10 = (int) t;
+            int num11 = num10 + 1;
+            int num12 = sourceLength - 1;
+            for (int k = 0; k < destLength; k++) {
+                int num13 = (int) (t + k * r);
+                if (num13 > num10) {
+                    num9 = 0;
+                    if (num13 >= num12) {
+                        num10 = num12;
+                        num11 = num12;
+                    }
+                    else {
+                        num10 = num13;
+                        num11 = num13 + 1;
+                    }
+                }
+
+                dest[k] = (source[num10] * (num7 - num9) + source[num11] * num9) * num8;
+                num9++;
+            }
+        }
+
 
         public static void ForwardTransform(Complex[] buffer, int length) {
             if (length <= MaxLutBins)

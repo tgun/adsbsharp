@@ -45,47 +45,51 @@
     <Compile Include="Constants.cs" />
     <Compile Include="DigitClickEventArgs.cs" />
     <Compile Include="EntryMode.cs" />
-    <Compile Include="FrequencyEdit.cs">
+    <Compile Include="Controls\FrequencyEdit.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="FrequencyEdit.Designer.cs">
+    <Compile Include="Controls\FrequencyEdit.Designer.cs">
       <DependentUpon>FrequencyEdit.cs</DependentUpon>
     </Compile>
-    <Compile Include="FrequencyEditDigit.cs">
+    <Compile Include="Controls\FrequencyEditDigit.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="FrequencyEditDigit.Designer.cs">
+    <Compile Include="Controls\FrequencyEditDigit.Designer.cs">
       <DependentUpon>FrequencyEditDigit.cs</DependentUpon>
     </Compile>
-    <Compile Include="FrequencyEditSeperator.cs">
+    <Compile Include="Controls\FrequencyEditSeperator.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="FrequencyEditSeperator.Designer.cs">
+    <Compile Include="Controls\FrequencyEditSeperator.Designer.cs">
       <DependentUpon>FrequencyEditSeperator.cs</DependentUpon>
     </Compile>
     <Compile Include="IRenderable.cs" />
-    <Compile Include="SpectrumAnalyzer.cs">
+    <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Controls\Waterfall.cs">
       <SubType>UserControl</SubType>
     </Compile>
-    <Compile Include="SpectrumAnalyzer.Designer.cs">
-      <DependentUpon>SpectrumAnalyzer.cs</DependentUpon>
+    <Compile Include="Controls\Waterfall.Designer.cs">
+      <DependentUpon>Waterfall.cs</DependentUpon>
     </Compile>
-    <Compile Include="Properties\AssemblyInfo.cs" />
     <Service Include="{94E38DFF-614B-4cbd-B67C-F211BB35CE8B}" />
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="FrequencyEdit.resx">
+    <EmbeddedResource Include="Controls\FrequencyEdit.resx">
       <DependentUpon>FrequencyEdit.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="FrequencyEditDigit.resx">
+    <EmbeddedResource Include="Controls\FrequencyEditDigit.resx">
       <DependentUpon>FrequencyEditDigit.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="FrequencyEditSeperator.resx">
+    <EmbeddedResource Include="Controls\FrequencyEditSeperator.resx">
       <DependentUpon>FrequencyEditSeperator.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="SpectrumAnalyzer.resx">
-      <DependentUpon>SpectrumAnalyzer.cs</DependentUpon>
-    </EmbeddedResource>
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\BetterSDR.Common\BetterSDR.Common.csproj">
+      <Project>{DA2DBD42-2D84-4591-964A-3B8F8626415B}</Project>
+      <Name>BetterSDR.Common</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

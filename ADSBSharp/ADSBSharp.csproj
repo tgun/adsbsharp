@@ -68,6 +68,7 @@
     <Compile Include="Mainform.designer.cs">
       <DependentUpon>Mainform.cs</DependentUpon>
     </Compile>
+    <Compile Include="PyDecoder.cs" />
     <Compile Include="SimpleTCPServer.cs" />
     <EmbeddedResource Include="MessageDisplay.resx">
       <DependentUpon>MessageDisplay.cs</DependentUpon>
