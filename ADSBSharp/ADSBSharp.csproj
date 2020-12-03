@@ -110,17 +110,17 @@
     <Content Include="radar.ico" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BetterSDR.Common\BetterSDR.Common.csproj">
-      <Project>{DA2DBD42-2D84-4591-964A-3B8F8626415B}</Project>
+    <ProjectReference Include="..\BetterSDR\BetterSDR.Common\BetterSDR.Common.csproj">
+      <Project>{da2dbd42-2d84-4591-964a-3b8f8626415b}</Project>
       <Name>BetterSDR.Common</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\BetterSDR\BetterSDR.RTLSDR\BetterSDR.RTLSDR.csproj">
+      <Project>{0de99142-09c0-4841-a6d7-0c8356d6a5b5}</Project>
+      <Name>BetterSDR.RTLSDR</Name>
     </ProjectReference>
     <ProjectReference Include="..\libModeSharp\libModeSharp.csproj">
       <Project>{c683f370-e4f1-440f-b830-90a2ce5bafed}</Project>
       <Name>libModeSharp</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\libRtlSdrSharp\BetterSDR.RTLSDR.csproj">
-      <Project>{0de99142-09c0-4841-a6d7-0c8356d6a5b5}</Project>
-      <Name>BetterSDR.RTLSDR</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -1,0 +1,3 @@
+[submodule "BetterSDR"]
+	path = BetterSDR
+	url = https://github.com/tgun/BetterSDR
