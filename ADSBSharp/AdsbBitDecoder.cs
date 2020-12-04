@@ -20,6 +20,7 @@ namespace ADSBSharp {
 
         private Dictionary<uint, ulong> _icaos = new Dictionary<uint, ulong>();
         private Dictionary<uint, int> _candidateIcaOs = new Dictionary<uint, int>();
+        public List<long> SeenIcaos = new List<long>();
         private readonly byte[] _frame = new byte[LongFrameLengthBits / 8];
         private readonly int[] _candidate = new int[PreambleLengthBits + LongFrameLengthBits * 2];
         private int _candidateHead;
@@ -37,7 +38,7 @@ namespace ADSBSharp {
 
             foreach (byte t in Preamble) {
                 int mag = _candidate[queuePtr];
-                queuePtr = (queuePtr + 1) % _candidate.Length;
+                queuePtr = (queuePtr + 1) % _candidate.Length; // -- Keeps the queue pointer increasing until it hits the end, then flips it back to zero.
 
                 if (t == 1) {
                     if (mag > lastZero) {
@@ -87,18 +88,18 @@ namespace ADSBSharp {
                         }
                     }
                     lastAvg = avg;
-
+                    // -- Converts the current magnitude value into a Bit value, 1 or zero. (Demodulate)
                     int bit = lastMag > mag ? 1 : 0;
 
                     int frameBitPosition = i / 2;
 
-                    if (bit == 1) {
+                    if (bit == 1) { // -- Adds the value of the bit to the current frame.
                         int index = frameBitPosition / 8;
                         int shift = 7 - (frameBitPosition % 8);
                         _frame[index] += (byte)(1 << shift);
                     }
 
-                    if (frameBitPosition == 7) {
+                    if (frameBitPosition == 7) { // -- After a certain amount of bits have been decoded, try to determine what kind of modes message this could be
                         if (_frame[0] == 0) {
                             return;
                         }
@@ -106,9 +107,9 @@ namespace ADSBSharp {
                         frameBitLength = df >= 16 ? LongFrameLengthBits : ShortFrameLengthBits;
                     }
 
-                    if (frameBitLength > 0 && frameBitPosition == frameBitLength - 1) {
+                    if (frameBitLength > 0 && frameBitPosition == frameBitLength - 1) { // -- Once we've made it to the end, decode the frame
                         var length = frameBitLength / 8;
-                        if (_frame[length - 1] == 0 && _frame[length - 2] == 0 && _frame[length - 3] == 0) {
+                        if (_frame[length - 1] == 0 && _frame[length - 2] == 0 && _frame[length - 3] == 0) { // -- assuming the frame isn't invalid (last 3 bytes zeroed)
                             return;
                         }
                         var icao = GetICAOAddress(_frame);
@@ -130,6 +131,9 @@ namespace ADSBSharp {
                                 return;
                             }
                         }
+                        if (!SeenIcaos.Contains(icao))
+                            SeenIcaos.Add(icao);
+
                         _icaos[icao] = _ticks;
                         _candidateIcaOs.Remove(icao);
                         FrameReceived?.Invoke(_frame, frameBitLength / 8);

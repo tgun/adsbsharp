@@ -44,6 +44,7 @@
             this.biasTeeCheckbox = new System.Windows.Forms.CheckBox();
             this.startBtn = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label8 = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.timeoutNumericUpDown = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
@@ -58,7 +59,11 @@
             this.label6 = new System.Windows.Forms.Label();
             this.hostnameTb = new System.Windows.Forms.TextBox();
             this.btnDebug = new System.Windows.Forms.Button();
-            this.label8 = new System.Windows.Forms.Label();
+            this.button1 = new System.Windows.Forms.Button();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label10 = new System.Windows.Forms.Label();
+            this.lstOldIcaos = new System.Windows.Forms.ListBox();
+            this.lstNewIcaos = new System.Windows.Forms.ListBox();
             ((System.ComponentModel.ISupportInitialize)(this.tunerGainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.frequencyCorrectionNumericUpDown)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -235,6 +240,16 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Decoder";
             // 
+            // label8
+            // 
+            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label8.Location = new System.Drawing.Point(221, 34);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(60, 20);
+            this.label8.TabIndex = 42;
+            this.label8.Text = "FPS";
+            this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // label7
             // 
             this.label7.AutoSize = true;
@@ -397,7 +412,6 @@
             // 
             // btnDebug
             // 
-            this.btnDebug.Enabled = false;
             this.btnDebug.Location = new System.Drawing.Point(93, 12);
             this.btnDebug.Name = "btnDebug";
             this.btnDebug.Size = new System.Drawing.Size(53, 23);
@@ -406,21 +420,60 @@
             this.btnDebug.UseVisualStyleBackColor = true;
             this.btnDebug.Click += new System.EventHandler(this.btnDebug_Click);
             // 
-            // label8
+            // button1
             // 
-            this.label8.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label8.Location = new System.Drawing.Point(221, 34);
-            this.label8.Name = "label8";
-            this.label8.Size = new System.Drawing.Size(60, 20);
-            this.label8.TabIndex = 42;
-            this.label8.Text = "FPS";
-            this.label8.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.button1.Location = new System.Drawing.Point(107, 329);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(53, 23);
+            this.button1.TabIndex = 39;
+            this.button1.Text = "Debug";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // label9
+            // 
+            this.label9.AutoSize = true;
+            this.label9.Location = new System.Drawing.Point(330, 22);
+            this.label9.Name = "label9";
+            this.label9.Size = new System.Drawing.Size(23, 13);
+            this.label9.TabIndex = 40;
+            this.label9.Text = "Old";
+            // 
+            // label10
+            // 
+            this.label10.AutoSize = true;
+            this.label10.Location = new System.Drawing.Point(517, 22);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(29, 13);
+            this.label10.TabIndex = 41;
+            this.label10.Text = "New";
+            // 
+            // lstOldIcaos
+            // 
+            this.lstOldIcaos.FormattingEnabled = true;
+            this.lstOldIcaos.Location = new System.Drawing.Point(316, 45);
+            this.lstOldIcaos.Name = "lstOldIcaos";
+            this.lstOldIcaos.Size = new System.Drawing.Size(120, 290);
+            this.lstOldIcaos.TabIndex = 42;
+            // 
+            // lstNewIcaos
+            // 
+            this.lstNewIcaos.FormattingEnabled = true;
+            this.lstNewIcaos.Location = new System.Drawing.Point(520, 45);
+            this.lstNewIcaos.Name = "lstNewIcaos";
+            this.lstNewIcaos.Size = new System.Drawing.Size(120, 290);
+            this.lstNewIcaos.TabIndex = 43;
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(294, 357);
+            this.ClientSize = new System.Drawing.Size(732, 357);
+            this.Controls.Add(this.lstNewIcaos);
+            this.Controls.Add(this.lstOldIcaos);
+            this.Controls.Add(this.label10);
+            this.Controls.Add(this.label9);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.btnDebug);
             this.Controls.Add(this.hostnameTb);
             this.Controls.Add(this.label6);
@@ -484,6 +537,11 @@
         private System.Windows.Forms.CheckBox biasTeeCheckbox;
         private System.Windows.Forms.Button btnDebug;
         private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.Label label10;
+        private System.Windows.Forms.ListBox lstOldIcaos;
+        private System.Windows.Forms.ListBox lstNewIcaos;
     }
 }
 

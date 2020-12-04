@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.Linq;
 using System.Numerics;
 using BetterSDR.RTLSDR;
+using System.IO;
 
 namespace ADSBSharp {
     public partial class MainForm : Form {
@@ -22,6 +23,8 @@ namespace ADSBSharp {
         private float _avgFps;
         private float _newAvg;
         private Dictionary<int, string> _rtlDevices;
+        private BinaryWriter _magWriter;
+        private BinaryWriter _rawWriter;
 
         public MainForm() {
             InitializeComponent();
@@ -30,6 +33,7 @@ namespace ADSBSharp {
             _decoder.FrameReceived += delegate (byte[] frame, int length) {
                 Interlocked.Increment(ref _frameCount);
                 _frameSink.FrameReady(frame, length);
+                UpdateIcaos();
             };
 
             portNumericUpDown_ValueChanged(null, null);
@@ -50,7 +54,21 @@ namespace ADSBSharp {
         }
 
         #region GUI Controls
+        public delegate void BlankEventArgs();
+        private void UpdateIcaos() {
+            if (this.InvokeRequired) {
+                this.Invoke(new BlankEventArgs(UpdateIcaos));
+                return;
+            }
 
+            lstOldIcaos.Items.Clear();
+            foreach (var it in _decoder.SeenIcaos)
+                lstOldIcaos.Items.Add(it.ToString());
+
+            lstNewIcaos.Items.Clear();
+            foreach (var it in _alternateDecoder.SeenIcaos)
+                lstNewIcaos.Items.Add(it.ToString());
+        }
         private void startBtn_Click(object sender, EventArgs e) {
             if (!_isDecoding) {
                 StartDecoding();
@@ -117,16 +135,22 @@ namespace ADSBSharp {
                 readLength = _rtlDevice.Buffer.Length;
 
             Complex[] samples = _rtlDevice.Buffer.Read(readLength);
+            _alternateDecoder.DeviceOnRtlSdrDataAvailable(samples);
 
             foreach (Complex sample in samples) {
                 double imaginary = sample.Imaginary * 10 - 1275;
                 double real = sample.Real * 10 - 1275;
                 var mag = (int)(real * real + imaginary * imaginary);
+                var magBytes = BitConverter.GetBytes(mag);
+                var complexBYtes = BitConverter.GetBytes(sample.Magnitude);
+                
+                _magWriter?.Write(magBytes);
+                _rawWriter?.Write(complexBYtes);
 
                 _decoder.ProcessSample(mag);
             }
 
-            _alternateDecoder.DeviceOnRtlSdrDataAvailable(samples);
+            
         }
 
         private void tunerGainTrackBar_Scroll(object sender, EventArgs e) {
@@ -288,16 +312,28 @@ namespace ADSBSharp {
         }
 
         private void btnDebug_Click(object sender, EventArgs e) {
-            if (_displayWindow != null && _displayWindow.IsDisposed == false && _displayWindow.Visible == true)
-                return;
+            _magWriter = new BinaryWriter(File.Open("mag.raw", FileMode.OpenOrCreate));
+            _rawWriter = new BinaryWriter(File.Open("raw.raw", FileMode.OpenOrCreate));
 
-            _displayWindow = new MessageDisplay();
-            _decoder.FrameReceived += _displayWindow.ReceiveOldFrame;
+            StartDecoding();
+            //if (_displayWindow != null && _displayWindow.IsDisposed == false && _displayWindow.Visible == true)
+            //    return;
+
+            //_displayWindow = new MessageDisplay();
+            //_decoder.FrameReceived += _displayWindow.ReceiveOldFrame;
 
         }
 
         private void MainForm_Load(object sender, EventArgs e) {
 
+        }
+
+        private void button1_Click(object sender, EventArgs e) {
+            _magWriter.Close();
+            _rawWriter.Close();
+            _magWriter.Dispose();
+            _rawWriter.Dispose();
+            StopDecoding();
         }
     }
 }
