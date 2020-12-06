@@ -10,6 +10,9 @@ using System.IO;
 
 namespace ADSBSharp {
     public partial class MainForm : Form {
+        public static int SSDetected, ESDetected, OtherDetected;
+        public static int SSDecoded, ESDecoded, OtherDecoded;
+
         private IFrameSink _frameSink;
         private int _selectedDeviceIndex;
         private readonly AdsbBitDecoder _decoder = new AdsbBitDecoder();
@@ -25,6 +28,7 @@ namespace ADSBSharp {
         private Dictionary<int, string> _rtlDevices;
         private BinaryWriter _magWriter;
         private BinaryWriter _rawWriter;
+        private List<Aircraft> _currentAircraft = new List<Aircraft>();
 
         public MainForm() {
             InitializeComponent();
@@ -33,7 +37,7 @@ namespace ADSBSharp {
             _decoder.FrameReceived += delegate (byte[] frame, int length) {
                 Interlocked.Increment(ref _frameCount);
                 _frameSink.FrameReady(frame, length);
-                UpdateIcaos();
+                ProcessAircraft(frame);
             };
 
             portNumericUpDown_ValueChanged(null, null);
@@ -54,21 +58,7 @@ namespace ADSBSharp {
         }
 
         #region GUI Controls
-        public delegate void BlankEventArgs();
-        private void UpdateIcaos() {
-            if (this.InvokeRequired) {
-                this.Invoke(new BlankEventArgs(UpdateIcaos));
-                return;
-            }
 
-            lstOldIcaos.Items.Clear();
-            foreach (var it in _decoder.SeenIcaos)
-                lstOldIcaos.Items.Add(it.ToString());
-
-            lstNewIcaos.Items.Clear();
-            foreach (var it in _alternateDecoder.SeenIcaos)
-                lstNewIcaos.Items.Add(it.ToString());
-        }
         private void startBtn_Click(object sender, EventArgs e) {
             if (!_isDecoding) {
                 StartDecoding();
@@ -238,10 +228,12 @@ namespace ADSBSharp {
                 return;
             }
             
-            _alternateDecoder = new AlternateDecoder(_rtlDevice);
+            _alternateDecoder = new AlternateDecoder();
+
             _alternateDecoder.FrameReceived += delegate (byte[] frame, int length) {
                 Interlocked.Increment(ref _newFrameCount);
                 _frameSink.FrameReady(frame, length);
+                ProcessAircraft(frame);
             };
 
             try {
@@ -266,6 +258,57 @@ namespace ADSBSharp {
         }
 
         #endregion
+        private void UpdateGuiStats() {
+            txtDecodedES.Text = ESDecoded.ToString();
+            txtDecodedOther.Text = OtherDecoded.ToString();
+            txtDecodedSS.Text = SSDecoded.ToString();
+            txtDetectedES.Text = ESDetected.ToString();
+            txtDetectedSS.Text = SSDetected.ToString();
+            txtDetectedOther.Text = OtherDetected.ToString();
+        }
+
+        private void ProcessAircraft(byte[] frame) {
+            var msg = libModeSharp.ModeSMessage.DecodeMessage(frame);
+            
+            if (!msg.IsCrcOk)
+                return;
+
+            Aircraft currentAC;
+            if (!_currentAircraft.Any(a => a.ICAO == msg.ICAO)) {
+                var ac = new Aircraft() {
+                    ICAO = msg.ICAO
+                };
+                lock (_currentAircraft) {
+                    _currentAircraft.Add(ac);
+                }
+                currentAC = ac;
+            } else {
+                currentAC = _currentAircraft.FirstOrDefault(b => b.ICAO == msg.ICAO);
+            }
+
+            if (msg.Velocity != 0)
+            currentAC.CurrentSpeed = msg.Velocity;
+            
+            if (!string.IsNullOrEmpty(msg.Flight))
+                currentAC.FlightID = msg.Flight;
+            if (msg.Altitude != 0)
+                currentAC.CurrentAltitude = msg.Altitude;
+            currentAC.idk = msg.Identity.ToString();
+            currentAC.LastMessage = DateTime.Now;
+        }
+
+        private void UpdateAircraftDisplay() {
+            listView1.Items.Clear();
+            lock (_currentAircraft) {
+                foreach (var ac in _currentAircraft) {
+                    var meh = new ListViewItem(new string[] { ac.ICAO.ToString("x"), ac.FlightID != null ? ac.FlightID.ToString() : "", ac.CurrentAltitude.ToString(), ac.CurrentSpeed.ToString(), ac.idk != null ? ac.idk : ""});
+                    listView1.Items.Add(meh);
+                }
+
+                _currentAircraft.RemoveAll(a => (DateTime.Now - a.LastMessage).TotalSeconds > 120);
+            }
+        }
+
         private void fpsTimer_Tick(object sender, EventArgs e) {
             float fps = (_frameCount) * 1000.0f / fpsTimer.Interval;
             float nfps = (_newFrameCount) * 1000.0f / fpsTimer.Interval;
@@ -278,6 +321,8 @@ namespace ADSBSharp {
 
             fpsLabel.Text = ((int)_avgFps).ToString();
             label8.Text = ((int) _newAvg).ToString();
+            UpdateGuiStats();
+            UpdateAircraftDisplay();
         }
 
         private void notifyIcon_MouseDoubleClick(object sender, MouseEventArgs e) {

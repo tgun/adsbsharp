@@ -126,7 +126,7 @@ namespace ADSBSharp {
                                 return;
                             }
                         }
-                        else if (!_icaos.ContainsKey(icao)) {
+                        else if (!_icaos.ContainsKey(icao)) { // -- some unknown message type.. if we haven't seen the ICAO before, just drop it.
                             if (!UpdateConfidenceList(icao)) {
                                 return;
                             }
@@ -137,6 +137,13 @@ namespace ADSBSharp {
                         _icaos[icao] = _ticks;
                         _candidateIcaOs.Remove(icao);
                         FrameReceived?.Invoke(_frame, frameBitLength / 8);
+                        var message = libModeSharp.ModeSMessage.DecodeMessage(_frame);
+                        if (message.MessageType == 17)
+                            MainForm.SSDecoded++;
+                        else if (message.MessageType == 18)
+                            MainForm.ESDecoded++;
+                        else
+                            MainForm.OtherDecoded++;
                         return;
                     }
                 }
@@ -145,6 +152,7 @@ namespace ADSBSharp {
             }
         }
 
+        // -- Simply explained, if we have received the same ICAO at least 4 times, we'll call it as "we good!".
         private bool UpdateConfidenceList(uint icao) {
             int rank = _candidateIcaOs.ContainsKey(icao) ? _candidateIcaOs[icao] : 0;
             rank++;

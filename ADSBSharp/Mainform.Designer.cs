@@ -58,12 +58,24 @@
             this.shareCb = new System.Windows.Forms.CheckBox();
             this.label6 = new System.Windows.Forms.Label();
             this.hostnameTb = new System.Windows.Forms.TextBox();
-            this.btnDebug = new System.Windows.Forms.Button();
-            this.button1 = new System.Windows.Forms.Button();
             this.label9 = new System.Windows.Forms.Label();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.label10 = new System.Windows.Forms.Label();
-            this.lstOldIcaos = new System.Windows.Forms.ListBox();
-            this.lstNewIcaos = new System.Windows.Forms.ListBox();
+            this.label11 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
+            this.label13 = new System.Windows.Forms.Label();
+            this.txtDetectedSS = new System.Windows.Forms.TextBox();
+            this.txtDetectedES = new System.Windows.Forms.TextBox();
+            this.txtDetectedOther = new System.Windows.Forms.TextBox();
+            this.txtDecodedOther = new System.Windows.Forms.TextBox();
+            this.txtDecodedES = new System.Windows.Forms.TextBox();
+            this.txtDecodedSS = new System.Windows.Forms.TextBox();
+            this.listView1 = new System.Windows.Forms.ListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.tunerGainTrackBar)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.frequencyCorrectionNumericUpDown)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -71,6 +83,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.timeoutNumericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.confidenceNumericUpDown)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.portNumericUpDown)).BeginInit();
+            this.groupBox3.SuspendLayout();
             this.SuspendLayout();
             // 
             // deviceComboBox
@@ -195,7 +208,7 @@
             this.groupBox1.Controls.Add(this.frequencyCorrectionNumericUpDown);
             this.groupBox1.Controls.Add(this.tunerAgcCheckBox);
             this.groupBox1.Controls.Add(this.gainLabel);
-            this.groupBox1.Location = new System.Drawing.Point(12, 142);
+            this.groupBox1.Location = new System.Drawing.Point(574, 10);
             this.groupBox1.Name = "groupBox1";
             this.groupBox1.Size = new System.Drawing.Size(270, 202);
             this.groupBox1.TabIndex = 30;
@@ -233,9 +246,9 @@
             this.groupBox2.Controls.Add(this.confidenceNumericUpDown);
             this.groupBox2.Controls.Add(this.framesPerSecLbl);
             this.groupBox2.Controls.Add(this.fpsLabel);
-            this.groupBox2.Location = new System.Drawing.Point(12, 67);
+            this.groupBox2.Location = new System.Drawing.Point(298, 12);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(270, 69);
+            this.groupBox2.Size = new System.Drawing.Size(270, 109);
             this.groupBox2.TabIndex = 32;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Decoder";
@@ -410,71 +423,156 @@
             this.hostnameTb.TabIndex = 37;
             this.hostnameTb.Text = "sdrsharp.com";
             // 
-            // btnDebug
-            // 
-            this.btnDebug.Location = new System.Drawing.Point(93, 12);
-            this.btnDebug.Name = "btnDebug";
-            this.btnDebug.Size = new System.Drawing.Size(53, 23);
-            this.btnDebug.TabIndex = 38;
-            this.btnDebug.Text = "Debug";
-            this.btnDebug.UseVisualStyleBackColor = true;
-            this.btnDebug.Click += new System.EventHandler(this.btnDebug_Click);
-            // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(107, 329);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(53, 23);
-            this.button1.TabIndex = 39;
-            this.button1.Text = "Debug";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(330, 22);
+            this.label9.Location = new System.Drawing.Point(140, 23);
             this.label9.Name = "label9";
-            this.label9.Size = new System.Drawing.Size(23, 13);
-            this.label9.TabIndex = 40;
-            this.label9.Text = "Old";
+            this.label9.Size = new System.Drawing.Size(51, 13);
+            this.label9.TabIndex = 43;
+            this.label9.Text = "Detected";
+            // 
+            // groupBox3
+            // 
+            this.groupBox3.Controls.Add(this.txtDecodedOther);
+            this.groupBox3.Controls.Add(this.txtDecodedES);
+            this.groupBox3.Controls.Add(this.txtDecodedSS);
+            this.groupBox3.Controls.Add(this.txtDetectedOther);
+            this.groupBox3.Controls.Add(this.txtDetectedES);
+            this.groupBox3.Controls.Add(this.txtDetectedSS);
+            this.groupBox3.Controls.Add(this.label13);
+            this.groupBox3.Controls.Add(this.label12);
+            this.groupBox3.Controls.Add(this.label11);
+            this.groupBox3.Controls.Add(this.label10);
+            this.groupBox3.Controls.Add(this.label9);
+            this.groupBox3.Location = new System.Drawing.Point(12, 104);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(362, 148);
+            this.groupBox3.TabIndex = 38;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Packet Statistics";
             // 
             // label10
             // 
             this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(517, 22);
+            this.label10.Location = new System.Drawing.Point(230, 23);
             this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(29, 13);
-            this.label10.TabIndex = 41;
-            this.label10.Text = "New";
+            this.label10.Size = new System.Drawing.Size(51, 13);
+            this.label10.TabIndex = 44;
+            this.label10.Text = "Decoded";
             // 
-            // lstOldIcaos
+            // label11
             // 
-            this.lstOldIcaos.FormattingEnabled = true;
-            this.lstOldIcaos.Location = new System.Drawing.Point(316, 45);
-            this.lstOldIcaos.Name = "lstOldIcaos";
-            this.lstOldIcaos.Size = new System.Drawing.Size(120, 290);
-            this.lstOldIcaos.TabIndex = 42;
+            this.label11.AutoSize = true;
+            this.label11.Location = new System.Drawing.Point(26, 42);
+            this.label11.Name = "label11";
+            this.label11.Size = new System.Drawing.Size(71, 13);
+            this.label11.TabIndex = 45;
+            this.label11.Text = "Short Squitter";
             // 
-            // lstNewIcaos
+            // label12
             // 
-            this.lstNewIcaos.FormattingEnabled = true;
-            this.lstNewIcaos.Location = new System.Drawing.Point(520, 45);
-            this.lstNewIcaos.Name = "lstNewIcaos";
-            this.lstNewIcaos.Size = new System.Drawing.Size(120, 290);
-            this.lstNewIcaos.TabIndex = 43;
+            this.label12.AutoSize = true;
+            this.label12.Location = new System.Drawing.Point(6, 68);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(91, 13);
+            this.label12.TabIndex = 46;
+            this.label12.Text = "Extended Squitter";
+            // 
+            // label13
+            // 
+            this.label13.AutoSize = true;
+            this.label13.Location = new System.Drawing.Point(64, 95);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(33, 13);
+            this.label13.TabIndex = 47;
+            this.label13.Text = "Other";
+            // 
+            // txtDetectedSS
+            // 
+            this.txtDetectedSS.Location = new System.Drawing.Point(103, 39);
+            this.txtDetectedSS.Name = "txtDetectedSS";
+            this.txtDetectedSS.Size = new System.Drawing.Size(100, 20);
+            this.txtDetectedSS.TabIndex = 48;
+            // 
+            // txtDetectedES
+            // 
+            this.txtDetectedES.Location = new System.Drawing.Point(103, 65);
+            this.txtDetectedES.Name = "txtDetectedES";
+            this.txtDetectedES.Size = new System.Drawing.Size(100, 20);
+            this.txtDetectedES.TabIndex = 49;
+            // 
+            // txtDetectedOther
+            // 
+            this.txtDetectedOther.Location = new System.Drawing.Point(103, 91);
+            this.txtDetectedOther.Name = "txtDetectedOther";
+            this.txtDetectedOther.Size = new System.Drawing.Size(100, 20);
+            this.txtDetectedOther.TabIndex = 50;
+            // 
+            // txtDecodedOther
+            // 
+            this.txtDecodedOther.Location = new System.Drawing.Point(209, 91);
+            this.txtDecodedOther.Name = "txtDecodedOther";
+            this.txtDecodedOther.Size = new System.Drawing.Size(100, 20);
+            this.txtDecodedOther.TabIndex = 53;
+            // 
+            // txtDecodedES
+            // 
+            this.txtDecodedES.Location = new System.Drawing.Point(209, 65);
+            this.txtDecodedES.Name = "txtDecodedES";
+            this.txtDecodedES.Size = new System.Drawing.Size(100, 20);
+            this.txtDecodedES.TabIndex = 52;
+            // 
+            // txtDecodedSS
+            // 
+            this.txtDecodedSS.Location = new System.Drawing.Point(209, 39);
+            this.txtDecodedSS.Name = "txtDecodedSS";
+            this.txtDecodedSS.Size = new System.Drawing.Size(100, 20);
+            this.txtDecodedSS.TabIndex = 51;
+            // 
+            // listView1
+            // 
+            this.listView1.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3,
+            this.columnHeader4,
+            this.columnHeader5});
+            this.listView1.HideSelection = false;
+            this.listView1.Location = new System.Drawing.Point(12, 274);
+            this.listView1.Name = "listView1";
+            this.listView1.Size = new System.Drawing.Size(1023, 275);
+            this.listView1.TabIndex = 39;
+            this.listView1.UseCompatibleStateImageBehavior = false;
+            this.listView1.View = System.Windows.Forms.View.Details;
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "Aircraft ID";
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "Flight ID";
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Altitude";
+            // 
+            // columnHeader4
+            // 
+            this.columnHeader4.Text = "Speed";
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Flight ID";
             // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(732, 357);
-            this.Controls.Add(this.lstNewIcaos);
-            this.Controls.Add(this.lstOldIcaos);
-            this.Controls.Add(this.label10);
-            this.Controls.Add(this.label9);
-            this.Controls.Add(this.button1);
-            this.Controls.Add(this.btnDebug);
+            this.ClientSize = new System.Drawing.Size(1105, 579);
+            this.Controls.Add(this.listView1);
+            this.Controls.Add(this.groupBox3);
             this.Controls.Add(this.hostnameTb);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.shareCb);
@@ -501,6 +599,8 @@
             ((System.ComponentModel.ISupportInitialize)(this.timeoutNumericUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.confidenceNumericUpDown)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.portNumericUpDown)).EndInit();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -535,13 +635,25 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.TextBox hostnameTb;
         private System.Windows.Forms.CheckBox biasTeeCheckbox;
-        private System.Windows.Forms.Button btnDebug;
         private System.Windows.Forms.Label label8;
-        private System.Windows.Forms.Button button1;
         private System.Windows.Forms.Label label9;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private System.Windows.Forms.TextBox txtDecodedOther;
+        private System.Windows.Forms.TextBox txtDecodedES;
+        private System.Windows.Forms.TextBox txtDecodedSS;
+        private System.Windows.Forms.TextBox txtDetectedOther;
+        private System.Windows.Forms.TextBox txtDetectedES;
+        private System.Windows.Forms.TextBox txtDetectedSS;
+        private System.Windows.Forms.Label label13;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.Label label11;
         private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.ListBox lstOldIcaos;
-        private System.Windows.Forms.ListBox lstNewIcaos;
+        private System.Windows.Forms.ListView listView1;
+        private System.Windows.Forms.ColumnHeader columnHeader1;
+        private System.Windows.Forms.ColumnHeader columnHeader2;
+        private System.Windows.Forms.ColumnHeader columnHeader3;
+        private System.Windows.Forms.ColumnHeader columnHeader4;
+        private System.Windows.Forms.ColumnHeader columnHeader5;
     }
 }
 

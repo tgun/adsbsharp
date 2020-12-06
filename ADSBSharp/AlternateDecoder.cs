@@ -7,14 +7,11 @@ using libModeSharp;
 namespace ADSBSharp {
     public class AlternateDecoder {
         public List<long> SeenIcaos { get; set; }
-        private RtlDevice _rtlDevice;
         public ushort[] Magnitude = new ushort[Constants.ModesAsyncBufferSize + Constants.ModesPreableSize + Constants.ModesLongMessageBytes]; // -- MODES_DATA_LEN + (MODES_FULL_LEN-1)*4;
         private readonly ushort[] _magnitudeLookup = new ushort[2 * 256 * 256];
-        private readonly byte[] _otherMagnitudeLut = new byte[129 * 129 * 2];
-        public AlternateDecoder(RtlDevice deviceIo) {
+        public AlternateDecoder( ) {
             SeenIcaos = new List<long>();
             GenerateMagnitudeLookupTable();
-            _rtlDevice = deviceIo;
             ModeSMessage.Init();
         }
 
@@ -25,12 +22,6 @@ namespace ADSBSharp {
                     int magQ = (q * 2) - 255;
                     var mag = (int)Math.Round((Math.Sqrt((magI * magI) + (magQ * magQ)) * 258.433254) - 365.4798);
                     _magnitudeLookup[(i * 256) + q] = (ushort)((mag < 65535) ? mag : 65535);
-                }
-            }
-
-            for (var i = 0; i <= 128; i++) {
-                for (var q = 0; q <= 128; q++) {
-                    _otherMagnitudeLut[i * 129 + q] = (byte)Math.Round(Math.Sqrt(i * i + q * q) * 360);
                 }
             }
         }
@@ -56,21 +47,6 @@ namespace ADSBSharp {
             for (var j = 0; j < Constants.ModesAsyncBufferSamples; j++) {
                 Magnitude[m++] = _magnitudeLookup[data[p++]];
             }
-
-            //var mag2 = new ushort[Magnitude.Length];
-            //Array.Copy(Magnitude, mag2, Magnitude.Length);
-
-            //foreach (Complex item in data) {
-            //    var i = (int)item.Imaginary;
-            //    var q = (int)item.Real;
-
-            //    if (i < 0) i = -i;
-            //    if (q < 0) q = -q;
-
-            //    mag2[i / 2] = _otherMagnitudeLut[i * 129 + q];
-            //}
-
-            //Magnitude = mag2;
         }
         public event FrameReceivedDelegate FrameReceived;
         private void DetectModeS(ushort[] data, int magLen) {
@@ -235,7 +211,6 @@ namespace ADSBSharp {
 
                 // -- snaps!
                 ModeSMessage myModesMessage = ModeSMessage.DecodeMessage(pMessage);
-
 
                 if (myModesMessage.IsCrcOk) {
                     FrameReceived?.Invoke(myModesMessage.RawMessage, myModesMessage.RawMessage.Length);

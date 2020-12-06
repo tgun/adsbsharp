@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="AdsbBitDecoder.cs" />
     <Compile Include="AdsbHubClient.cs" />
+    <Compile Include="Aircraft.cs" />
     <Compile Include="AlternateDecoder.cs" />
     <Compile Include="IFrameSink.cs" />
     <Compile Include="MessageDisplay.cs">
